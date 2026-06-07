@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>화송이 영수증</title>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --accent:#d94f5c;
+  --accent-light:#fdeced;
+  --bg:#f2f3f5;
+  --panel:#ffffff;
+  --border:#e3e5e8;
+  --border2:#d0d3d8;
+  --text:#1a1a1a;
+  --muted:#6b7280;
+  --faint:#b0b7c0;
+  --tab-active:#d94f5c;
+  --input-bg:#f8f9fa;
+  --receipt-bg:#fffdf9;
+  --receipt-border:#e8e0d5;
+  --receipt-faint:#c0b8b0;
+  --ink:#1a1a1a;
+  --sidebar:360px;
+  --topbar:52px;
+}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* TOPBAR */
+.topbar{height:var(--topbar);background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;z-index:10}
+.topbar-title{font-size:15px;font-weight:700}
+.btn{padding:7px 16px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:white;color:var(--text);transition:all .15s;font-family:'Noto Sans KR',sans-serif}
+.btn:hover{background:var(--bg)}
+.btn-primary{background:var(--accent);color:white;border-color:var(--accent)}
+.btn-primary:hover{background:#c0404d;border-color:#c0404d}
+.preview-hint{font-size:12px;color:var(--muted);padding:0 16px}
+
+/* LAYOUT */
+.app-body{flex:1;display:flex;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar);background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.tab{flex:1;padding:12px 0;text-align:center;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tab.active{color:var(--tab-active);border-bottom-color:var(--tab-active)}
+.tab:hover:not(.active){color:var(--text)}
+.tab-content{flex:1;overflow-y:auto;padding:16px}
+.tab-page{display:none}
+.tab-page.active{display:block}
+
+/* FORM BASE */
+.field{margin-bottom:12px}
+.field-label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;display:block}
+.field input[type=text],.field textarea{width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:7px;background:var(--input-bg);font-size:13px;color:var(--text);font-family:'Noto Sans KR',sans-serif;outline:none;transition:border .15s}
+.field input[type=text]:focus,.field textarea:focus{border-color:var(--accent);background:#fff}
+.field textarea{resize:vertical;min-height:60px;line-height:1.5}
+.section-head{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:16px 0 10px;display:flex;align-items:center;gap:6px}
+.section-head::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* COLOR PICKER ROW — inline next to input */
+.with-color{display:flex;gap:6px;align-items:stretch}
+.with-color input[type=text],.with-color textarea{flex:1;min-width:0}
+.color-dot{width:32px;height:32px;border-radius:7px;border:1px solid var(--border2);cursor:pointer;flex-shrink:0;position:relative;overflow:hidden;transition:border-color .15s}
+.color-dot:hover{border-color:var(--accent)}
+.color-dot input[type=color]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;border:none;padding:0}
+.color-dot-swatch{position:absolute;inset:0;pointer-events:none;border-radius:6px}
+
+/* for textarea rows the dot should align top */
+.with-color.top-align{align-items:flex-start}
+.with-color.top-align .color-dot{margin-top:0}
+
+/* STYLE TOGGLE */
+.style-row{display:flex;gap:6px;margin-bottom:12px}
+.style-btn{flex:1;padding:6px 4px;border:1px solid var(--border2);border-radius:7px;background:var(--input-bg);font-size:12px;color:var(--muted);cursor:pointer;text-align:center;transition:all .15s;font-family:'Noto Sans KR',sans-serif}
+.style-btn.active{background:var(--accent);color:white;border-color:var(--accent)}
+
+/* FONT TOGGLE */
+.font-row{display:flex;gap:6px;margin-bottom:12px}
+.font-btn{flex:1;padding:6px 4px;border:1px solid var(--border2);border-radius:7px;background:var(--input-bg);font-size:12px;color:var(--muted);cursor:pointer;text-align:center;transition:all .15s}
+.font-btn.active{background:var(--accent);color:white;border-color:var(--accent)}
+.font-btn.gothic{font-family:'Noto Sans KR',sans-serif}
+.font-btn.mono{font-family:'Courier Prime',monospace}
+
+/* GLOBAL ACCENT SWATCHES (design tab) */
+.swatch-row{display:flex;gap:6px;flex-wrap:wrap}
+.swatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .15s,border-color .15s}
+.swatch:hover{transform:scale(1.15)}
+.swatch.active{border-color:#1a1a1a}
+
+/* TAGS */
+.tags-wrap{display:flex;flex-wrap:wrap;gap:5px;padding:6px;border:1px solid var(--border2);border-radius:7px;background:var(--input-bg);min-height:38px;cursor:text}
+.tags-wrap:focus-within{border-color:var(--accent);background:#fff}
+.tag-chip{background:var(--accent);color:white;font-size:11px;padding:2px 8px;border-radius:20px;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.tag-chip button{background:none;border:none;color:white;cursor:pointer;font-size:12px;line-height:1;padding:0}
+.tag-input{border:none;outline:none;background:none;font-size:12px;color:var(--text);font-family:'Noto Sans KR',sans-serif;min-width:80px;flex:1}
+
+/* INFO ROWS EDITOR */
+.info-rows-editor{display:flex;flex-direction:column;gap:8px}
+.info-row-editor{background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:5px}
+.info-row-editor-top{display:flex;gap:5px;align-items:center}
+.info-row-editor-top input{flex:1;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;background:white;font-size:12px;font-family:'Courier Prime',monospace;color:var(--text);outline:none}
+.info-row-editor-top input:focus{border-color:var(--accent)}
+.info-row-editor-bottom{display:flex;gap:5px;align-items:flex-start}
+.info-row-editor-bottom textarea{flex:1;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;background:white;font-size:12px;font-family:'Noto Sans KR',sans-serif;color:var(--text);outline:none;resize:none;min-height:34px;line-height:1.4}
+.info-row-editor-bottom textarea:focus{border-color:var(--accent)}
+.info-label-row{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.05em}
+
+.btn-x{background:none;border:none;cursor:pointer;color:var(--faint);font-size:14px;padding:4px;line-height:1;transition:color .15s}
+.btn-x:hover{color:var(--accent)}
+.btn-add{width:100%;padding:7px;border:1px dashed var(--border2);background:none;border-radius:7px;font-size:12px;color:var(--muted);cursor:pointer;margin-top:6px;transition:all .15s;font-family:'Noto Sans KR',sans-serif}
+.btn-add:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+
+/* FREE SECTIONS */
+.free-section-editor{background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px}
+.free-section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.free-section-num{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.free-section-editor input{width:100%;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;background:white;font-size:12px;margin-bottom:6px;font-family:'Noto Sans KR',sans-serif;outline:none}
+.free-section-editor input:focus{border-color:var(--accent)}
+.free-section-editor textarea{width:100%;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;background:white;font-size:12px;resize:none;min-height:56px;line-height:1.5;font-family:'Noto Sans KR',sans-serif;outline:none}
+.free-section-editor textarea:focus{border-color:var(--accent)}
+
+/* CHECKLIST */
+.checklist-items{display:flex;flex-direction:column;gap:5px}
+.checklist-item{display:grid;grid-template-columns:1fr 22px;gap:4px;align-items:center}
+.checklist-item input{padding:6px 9px;border:1px solid var(--border2);border-radius:6px;background:var(--input-bg);font-size:12px;color:var(--text);font-family:'Noto Sans KR',sans-serif;outline:none;width:100%}
+.checklist-item input:focus{border-color:var(--accent)}
+.checklist-title-input{width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:7px;background:var(--input-bg);font-size:13px;color:var(--text);font-family:'Noto Sans KR',sans-serif;outline:none;margin-bottom:6px}
+.checklist-title-input:focus{border-color:var(--accent)}
+
+/* IMAGE UPLOAD */
+.upload-zone{border:2px dashed var(--border2);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all .2s;background:var(--input-bg);position:relative;overflow:hidden}
+.upload-zone:hover{border-color:var(--accent);background:var(--accent-light)}
+.upload-zone.has-img{padding:0;border-style:solid;border-color:var(--accent)}
+.upload-zone img{width:100%;max-height:110px;object-fit:cover;border-radius:8px;display:none}
+.upload-zone.has-img img{display:block}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload-hint{font-size:12px;color:var(--muted);pointer-events:none}
+.upload-hint em{display:block;font-size:20px;font-style:normal;margin-bottom:3px}
+.btn-clear-img{position:absolute;top:5px;right:5px;background:rgba(0,0,0,.5);color:white;border:none;border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1;z-index:2}
+.upload-zone.has-img .btn-clear-img{display:flex}
+
+/* PREVIEW AREA */
+.preview-area{flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:32px 24px;background:var(--bg)}
+
+/* RECEIPT */
+.receipt-wrap{display:flex;flex-direction:column;align-items:center}
+.receipt{width:380px;background:var(--receipt-bg);box-shadow:0 6px 48px rgba(0,0,0,.13),0 1px 4px rgba(0,0,0,.07)}
+.receipt.mono-font{font-family:'Courier Prime','Noto Sans KR',monospace}
+
+/* edge style: zigzag (default) */
+.tear{width:100%;height:14px;background:var(--bg);position:relative;flex-shrink:0}
+.tear-top::after,.tear-bottom::before{content:'';position:absolute;left:0;right:0;height:14px;background:var(--receipt-bg)}
+.tear-top::after{bottom:0;clip-path:polygon(0% 100%,2% 0%,4% 100%,6% 0%,8% 100%,10% 0%,12% 100%,14% 0%,16% 100%,18% 0%,20% 100%,22% 0%,24% 100%,26% 0%,28% 100%,30% 0%,32% 100%,34% 0%,36% 100%,38% 0%,40% 100%,42% 0%,44% 100%,46% 0%,48% 100%,50% 0%,52% 100%,54% 0%,56% 100%,58% 0%,60% 100%,62% 0%,64% 100%,66% 0%,68% 100%,70% 0%,72% 100%,74% 0%,76% 100%,78% 0%,80% 100%,82% 0%,84% 100%,86% 0%,88% 100%,90% 0%,92% 100%,94% 0%,96% 100%,98% 0%,100% 100%)}
+.tear-bottom::before{top:0;clip-path:polygon(0% 0%,2% 100%,4% 0%,6% 100%,8% 0%,10% 100%,12% 0%,14% 100%,16% 0%,18% 100%,20% 0%,22% 100%,24% 0%,26% 100%,28% 0%,30% 100%,32% 0%,34% 100%,36% 0%,38% 100%,40% 0%,42% 100%,44% 0%,46% 100%,48% 0%,50% 100%,52% 0%,54% 100%,56% 0%,58% 100%,60% 0%,62% 100%,64% 0%,66% 100%,68% 0%,70% 100%,72% 0%,74% 100%,76% 0%,78% 100%,80% 0%,82% 100%,84% 0%,86% 100%,88% 0%,90% 100%,92% 0%,94% 100%,96% 0%,98% 100%,100% 0%)}
+
+/* edge style: rounded corners */
+.edge-rounded .tear{display:none}
+.edge-rounded .receipt{border-radius:20px;overflow:hidden}
+.edge-rounded .receipt-inner{border-left:none;border-right:none}
+
+/* edge style: square */
+.edge-square .tear{display:none}
+.edge-square .receipt{border-radius:0;overflow:hidden}
+.edge-square .receipt-inner{border-left:none;border-right:none}
+
+/* edge style button grid */
+.edge-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px}
+.edge-btn{padding:10px 6px;border:1px solid var(--border2);border-radius:8px;background:var(--input-bg);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all .15s;font-family:'Noto Sans KR',sans-serif}
+.edge-btn:hover{border-color:var(--accent);background:var(--accent-light)}
+.edge-btn.active{border-color:var(--accent);background:var(--accent-light);color:var(--accent)}
+.edge-btn span{font-size:11px;font-weight:500;color:inherit}
+.edge-icon{width:48px;height:24px;background:var(--border);position:relative;overflow:hidden}
+.edge-icon svg{width:100%;height:100%}
+
+.receipt-inner{padding:0 22px;border-left:1px solid var(--receipt-border);border-right:1px solid var(--receipt-border)}
+.r-topline{display:flex;justify-content:space-between;align-items:center;padding:10px 0 6px}
+.r-admit{font-size:9px;letter-spacing:.3em;color:var(--accent);font-weight:700;border:1px solid var(--accent);padding:2px 8px;text-transform:uppercase}
+.r-date{font-size:10px;color:var(--receipt-faint);font-family:'Courier Prime',monospace}
+.r-image-block{margin:0 -22px;background:#e8e0d5;overflow:hidden;position:relative}
+.r-image-block-extra{margin:10px -22px 0;background:#e8e0d5;overflow:hidden;position:relative;}
+.r-image-canvas{display:block;width:100%;cursor:grab;user-select:none}
+.r-image-canvas:active{cursor:grabbing}
+.r-image-placeholder{height:80px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--receipt-faint);letter-spacing:.12em}
+/* banner editor card */
+.banner-card{background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px}
+.banner-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.banner-card-num{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.img-ctrl-row{display:flex;align-items:center;gap:8px;margin-top:6px}
+.img-ctrl-row label{font-size:11px;color:var(--muted);white-space:nowrap;min-width:24px}
+.img-ctrl-row input[type=range]{flex:1}
+.img-ctrl-row span{font-size:11px;color:var(--muted);min-width:36px;text-align:right}
+.r-title-area{padding:10px 0 8px;border-bottom:1px dashed var(--receipt-faint)}
+.r-main-title{font-size:36px;font-weight:900;line-height:1.1;word-break:keep-all}
+.r-sub-title{font-size:13px;margin-top:2px}
+.r-tags{display:flex;flex-wrap:wrap;gap:4px;padding:8px 0}
+.r-tag{font-size:10px;padding:2px 8px;border-radius:20px;border:1px solid;font-weight:700;letter-spacing:.05em}
+.r-dashed{border-top:1px dashed var(--receipt-faint)}
+.r-divider-solid .r-dashed,.r-divider-solid .r-title-area,.r-divider-solid .r-info-section,.r-divider-solid .r-free-section,.r-divider-solid .r-checklist,.r-divider-solid .r-note{border-top-style:solid!important;border-bottom-style:solid!important}
+.r-divider-double .r-dashed,.r-divider-double .r-title-area,.r-divider-double .r-info-section,.r-divider-double .r-free-section,.r-divider-double .r-checklist,.r-divider-double .r-note{border-top:3px double var(--receipt-faint)!important;border-bottom:3px double var(--receipt-faint)!important}
+.r-divider-wave .r-dashed,.r-divider-wave .r-title-area,.r-divider-wave .r-info-section,.r-divider-wave .r-free-section,.r-divider-wave .r-checklist,.r-divider-wave .r-note{border-top-style:dotted!important;border-bottom-style:dotted!important}
+.r-info-section{padding:8px 0}
+.r-info-row{display:grid;grid-template-columns:80px 1fr;gap:4px;margin-bottom:7px}
+.r-info-row:last-child{margin-bottom:0}
+.r-info-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding-top:1px}
+.r-info-value{font-size:12px;line-height:1.55;word-break:keep-all}
+.r-free-section{padding:8px 0;border-top:1px dashed var(--receipt-faint)}
+.r-free-label{font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-bottom:4px}
+.r-free-content{font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:keep-all}
+.r-checklist{padding:8px 0;border-top:1px dashed var(--receipt-faint)}
+.r-checklist-title{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+.r-checklist-items{display:flex;flex-direction:column;gap:3px}
+.r-checklist-item{font-size:12px;display:flex;align-items:center;gap:6px}
+.r-checklist-item::before{content:'□';font-size:11px;color:var(--receipt-faint);flex-shrink:0}
+.r-note{padding:6px 0;border-top:1px dashed var(--receipt-faint);font-size:10px;text-align:center;line-height:1.6}
+.r-barcode{padding:10px 0 14px;display:flex;flex-direction:column;align-items:center;gap:5px}
+.r-barcode svg{width:100%;height:50px}
+.r-barcode-num{font-size:9px;letter-spacing:.2em;font-family:'Courier Prime',monospace}
+
+/* color dot small (for section labels) */
+.color-dot-sm{width:26px;height:26px;border-radius:6px;border:1px solid var(--border2);cursor:pointer;position:relative;overflow:hidden;flex-shrink:0;transition:border-color .15s}
+.color-dot-sm:hover{border-color:var(--accent)}
+.color-dot-sm input[type=color]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.color-dot-sm-swatch{position:absolute;inset:0;pointer-events:none;border-radius:5px}
+
+.emoji-btn{background:var(--input-bg);border:1px solid var(--border2);border-radius:6px;padding:5px 7px;font-size:16px;cursor:pointer;transition:all .15s;line-height:1}
+.emoji-btn:hover{border-color:var(--accent);background:var(--accent-light);transform:scale(1.15)}
+.tab-content::-webkit-scrollbar{width:4px}
+
+/* WELCOME MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:flex;align-items:center;justify-content:center}
+.modal-box{background:white;border-radius:16px;padding:32px 28px;width:420px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.2);position:relative}
+.modal-title{font-size:20px;font-weight:900;color:var(--text);margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:20px}
+.modal-section{background:var(--input-bg);border-radius:10px;padding:14px 16px;margin-bottom:12px}
+.modal-section-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.modal-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:7px;font-size:13px;color:var(--text);line-height:1.5}
+.modal-row:last-child{margin-bottom:0}
+.modal-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.modal-warn{background:#fff8ed;border:1px solid #fde68a;border-radius:10px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:#92400e;line-height:1.6}
+.modal-warn strong{display:block;margin-bottom:3px;font-size:12px}
+.modal-close{width:100%;padding:12px;background:var(--accent);color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:background .15s}
+.modal-close:hover{background:#c0404d}
+.tab-content::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.preview-area::-webkit-scrollbar{width:6px}
+.preview-area::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">🎟 화송이 영수증</div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <span class="preview-hint">미리보기 · 저장 시 2배 해상도 PNG</span>
+    <button class="btn" onclick="saveSettings()" title="현재 설정을 브라우저에 저장">💾 저장</button>
+    <button class="btn" onclick="loadSettings()" title="저장된 설정 불러오기">📂 불러오기</button>
+    <button class="btn" onclick="resetAll()">초기화</button>
+    <button class="btn btn-primary" onclick="downloadPNG()">이미지 저장 ↓</button>
+  </div>
+</div>
+
+<div class="app-body">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('profile',this)">프로필</div>
+    <div class="tab" onclick="switchTab('image',this)">이미지</div>
+    <div class="tab" onclick="switchTab('design',this)">디자인</div>
+  </div>
+  <div class="tab-content">
+
+    <!-- PROFILE TAB -->
+    <div class="tab-page active" id="tab-profile">
+
+      <div class="section-head">기본 정보</div>
+
+      <!-- Main title -->
+      <div class="field">
+        <label class="field-label">타이틀 (큰 제목)</label>
+        <div class="with-color">
+          <input type="text" id="mainTitle" value="SHIROLILY" placeholder="SHIROLILY" oninput="render()">
+          <div class="color-dot" id="dot-mainTitle" title="색상 변경">
+            <div class="color-dot-swatch" id="swatch-mainTitle" style="background:#d94f5c"></div>
+            <input type="color" value="#d94f5c" oninput="setFieldColor('mainTitle',this.value)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Nick style -->
+      <div class="field">
+        <label class="field-label">타이틀 스타일</label>
+        <div class="style-row">
+          <button class="style-btn active" onclick="setNickStyle('filled',this)">■ 채움</button>
+          <button class="style-btn" onclick="setNickStyle('outline',this)">□ 외곽선</button>
+          <button class="style-btn" onclick="setNickStyle('plain',this)">가 텍스트만</button>
+        </div>
+        <div id="outlineColorRow" style="display:none;align-items:center;gap:8px;margin-top:8px">
+          <span style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase">외곽선 색상</span>
+          <div class="color-dot" id="dot-outlineColor" title="외곽선 색상">
+            <div class="color-dot-swatch" id="swatch-outlineColor" style="background:#1a1a1a"></div>
+            <input type="color" value="#1a1a1a" oninput="setOutlineColor(this.value)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub title -->
+      <div class="field">
+        <label class="field-label">부제목</label>
+        <div class="with-color">
+          <input type="text" id="subTitle" value="카네사키 시로x릴리 디아즈" placeholder="내용을 작성해주세요." oninput="render()">
+          <div class="color-dot" id="dot-subTitle" title="색상 변경">
+            <div class="color-dot-swatch" id="swatch-subTitle" style="background:#c0b8b0"></div>
+            <input type="color" value="#c0b8b0" oninput="setFieldColor('subTitle',this.value)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Date -->
+      <div class="field">
+        <label class="field-label">날짜</label>
+        <div class="with-color">
+          <input type="text" id="ticketDate" value="2020-03-04" oninput="render()">
+          <div class="color-dot" id="dot-ticketDate" title="색상 변경">
+            <div class="color-dot-swatch" id="swatch-ticketDate" style="background:#c0b8b0"></div>
+            <input type="color" value="#c0b8b0" oninput="setFieldColor('ticketDate',this.value)">
+          </div>
+        </div>
+      </div>
+
+      <div class="section-head">태그</div>
+      <div class="field">
+        <div class="tags-wrap" id="tagsWrap" onclick="document.getElementById('tagInput').focus()">
+          <input type="text" id="tagInput" class="tag-input" placeholder="태그 입력 후 Enter" onkeydown="tagKeydown(event)">
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">태그 스타일</label>
+        <div class="style-row" style="margin-bottom:6px">
+          <button class="style-btn active" id="tagStyleFilled" onclick="setTagStyle('filled',this)">■ 채움</button>
+          <button class="style-btn" id="tagStyleOutline" onclick="setTagStyle('outline',this)">□ 외곽선</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase">태그 색상</span>
+          <div class="color-dot" id="dot-tagColor" title="태그 색상">
+            <div class="color-dot-swatch" id="swatch-tagColor" style="background:#d94f5c"></div>
+            <input type="color" value="#d94f5c" oninput="setTagColor(this.value)">
+          </div>
+        </div>
+      </div>
+
+      <div class="section-head">정보 항목</div>
+      <div class="info-rows-editor" id="infoRowsEditor"></div>
+      <button class="btn-add" onclick="addInfoRow()">+ 항목 추가</button>
+
+      <div class="section-head">자유 기입 섹션</div>
+      <div id="freeSections"></div>
+      <button class="btn-add" onclick="addFreeSection()">+ 섹션 추가</button>
+
+      <div class="section-head">기타사항</div>
+      <div id="miscSections"></div>
+      <button class="btn-add" onclick="addMiscSection()">+ 기타사항 세션 추가</button>
+
+      <div class="section-head">하단 메모</div>
+      <div class="field">
+        <div class="with-color top-align">
+          <textarea id="noteText" rows="3" placeholder="안내 문구..." oninput="render()">*원활한 관람 및 관람 에티켓을 위해 사전 입장을 부탁드립니다.</textarea>
+          <div class="color-dot" id="dot-noteText" title="색상 변경" style="margin-top:1px">
+            <div class="color-dot-swatch" id="swatch-noteText" style="background:#c0b8b0"></div>
+            <input type="color" value="#c0b8b0" oninput="setFieldColor('noteText',this.value)">
+          </div>
+        </div>
+      </div>
+
+      <div class="section-head">바코드 번호</div>
+      <div class="field">
+        <input type="text" id="barcodeNum" value="780541239876" maxlength="14" placeholder="숫자 12자리" oninput="render()" style="width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:7px;background:var(--input-bg);font-size:13px;color:var(--text);font-family:'Noto Sans KR',sans-serif;outline:none">
+      </div>
+      <div class="field">
+        <div style="display:flex;gap:12px">
+          <div style="flex:1">
+            <label class="field-label">메인 색상 (굵은 막대)</label>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+              <div class="color-dot" title="메인 색상">
+                <div class="color-dot-swatch" id="swatch-barcodeMain" style="background:#1a1a1a"></div>
+                <input type="color" value="#1a1a1a" oninput="setBarcodeColor('main',this.value)">
+              </div>
+              <span style="font-size:11px;color:var(--muted)">검정</span>
+            </div>
+          </div>
+          <div style="flex:1">
+            <label class="field-label">서브 색상 (포인트 막대)</label>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+              <div class="color-dot" title="서브 색상">
+                <div class="color-dot-swatch" id="swatch-barcodeSub" style="background:#d94f5c"></div>
+                <input type="color" value="#d94f5c" oninput="setBarcodeColor('sub',this.value)">
+              </div>
+              <span style="font-size:11px;color:var(--muted)" id="barcodeSubLabel">붉은색</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- tab-profile -->
+
+    <!-- IMAGE TAB -->
+    <div class="tab-page" id="tab-image">
+      <div class="section-head">이미지 세션</div>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:10px">이미지를 여러 장 추가할 수 있어요. 미리보기에서 드래그로 이동, 휠로 확대·축소해요.</p>
+      <div id="bannerCardsEditor"></div>
+      <button class="btn-add" onclick="addBannerSlot()">+ 이미지 추가</button>
+    </div>
+
+    <!-- DESIGN TAB -->
+    <div class="tab-page" id="tab-design">
+      <div class="section-head">전체 포인트 색상</div>
+      <div class="field">
+        <div class="swatch-row" id="swatches">
+          <div class="swatch active" data-c="#d94f5c" style="background:#d94f5c"></div>
+          <div class="swatch" data-c="#9b5de5" style="background:#9b5de5"></div>
+          <div class="swatch" data-c="#f15bb5" style="background:#f15bb5"></div>
+          <div class="swatch" data-c="#0077b6" style="background:#0077b6"></div>
+          <div class="swatch" data-c="#2d9949" style="background:#2d9949"></div>
+          <div class="swatch" data-c="#e07c24" style="background:#e07c24"></div>
+          <div class="swatch" data-c="#888" style="background:#888"></div>
+          <div class="swatch" data-c="#1a1a1a" style="background:#1a1a1a"></div>
+        </div>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-top:4px">전체 포인트 색을 한번에 변경합니다.<br>프로필 탭에서 항목별 색을 개별 조정할 수 있어요.</p>
+
+      <div class="section-head">폰트</div>
+      <div class="font-row">
+        <button class="font-btn gothic active" onclick="setFont('gothic',this)">고딕</button>
+        <button class="font-btn mono" onclick="setFont('mono',this)" style="font-family:'Courier Prime',monospace">모노</button>
+      </div>
+
+      <div class="section-head">영수증 배경색</div>
+      <div class="field">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+          <div class="swatch active" id="bg-cream" data-bg="#fffdf9" style="background:#fffdf9;border:1px solid #ddd" onclick="setBgColor('#fffdf9',this)" title="크림"></div>
+          <div class="swatch" id="bg-white" data-bg="#ffffff" style="background:#ffffff;border:1px solid #ddd" onclick="setBgColor('#ffffff',this)" title="흰색"></div>
+          <div class="swatch" id="bg-pink" data-bg="#fff0f3" style="background:#fff0f3;border:1px solid #ddd" onclick="setBgColor('#fff0f3',this)" title="핑크"></div>
+          <div class="swatch" id="bg-blue" data-bg="#f0f4ff" style="background:#f0f4ff;border:1px solid #ddd" onclick="setBgColor('#f0f4ff',this)" title="하늘"></div>
+          <div class="swatch" id="bg-mint" data-bg="#f0fff4" style="background:#f0fff4;border:1px solid #ddd" onclick="setBgColor('#f0fff4',this)" title="민트"></div>
+          <div class="swatch" id="bg-lemon" data-bg="#fdfaf0" style="background:#fdfaf0;border:1px solid #ddd" onclick="setBgColor('#fdfaf0',this)" title="레몬"></div>
+          <div class="swatch" id="bg-lavender" data-bg="#f5f0ff" style="background:#f5f0ff;border:1px solid #ddd" onclick="setBgColor('#f5f0ff',this)" title="라벤더"></div>
+          <div class="swatch" id="bg-dark" data-bg="#1a1a2e" style="background:#1a1a2e;border:1px solid #555" onclick="setBgColor('#1a1a2e',this)" title="다크"></div>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border:1px solid var(--border2);border-radius:7px;background:var(--input-bg);transition:border-color .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)'">
+          <div id="bgCustomPreview" style="width:20px;height:20px;border-radius:50%;background:#fffdf9;border:1px solid #ddd;flex-shrink:0"></div>
+          <span style="font-size:12px;color:var(--muted);flex:1">직접 색상 선택하기 🎨</span>
+          <input type="color" id="bgColorInput" value="#fffdf9" style="width:0;height:0;opacity:0;position:absolute" oninput="setBgColor(this.value,'custom')">
+        </label>
+      </div>
+
+      <div class="section-head">구분선 스타일</div>
+      <div class="style-row">
+        <button class="style-btn active" id="div-dashed" onclick="setDivider('dashed',this)">- - 점선</button>
+        <button class="style-btn" id="div-solid" onclick="setDivider('solid',this)">── 실선</button>
+        <button class="style-btn" id="div-double" onclick="setDivider('double',this)">═ 이중선</button>
+        <button class="style-btn" id="div-wave" onclick="setDivider('wave',this)">··· 점점</button>
+      </div>
+
+      <div class="section-head">구분선 색상</div>
+      <div class="field">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="color-dot" title="구분선 색상">
+            <div class="color-dot-swatch" id="swatch-dividerColor" style="background:#c0b8b0"></div>
+            <input type="color" value="#c0b8b0" oninput="setDividerColor(this.value)">
+          </div>
+          <span style="font-size:11px;color:var(--muted)">점선·실선 색상 변경</span>
+        </div>
+      </div>
+
+      <div class="section-head">타이틀 크기</div>
+      <div class="img-ctrl-row" style="margin-bottom:12px">
+        <label>크기</label>
+        <input type="range" id="titleSize" min="18" max="64" value="36" step="1" oninput="setTitleSize(this.value)">
+        <span id="titleSizeVal" style="font-size:11px;color:var(--muted);min-width:36px;text-align:right">36px</span>
+      </div>
+
+      <div class="section-head">영수증 엣지 스타일</div>
+      <div class="edge-grid">
+        <button class="edge-btn active" onclick="setEdge('zigzag',this)">
+          <svg width="48" height="20" viewBox="0 0 48 20"><rect x="0" y="4" width="48" height="12" fill="var(--border2)"/><polyline points="0,4 4,0 8,4 12,0 16,4 20,0 24,4 28,0 32,4 36,0 40,4 44,0 48,4" fill="var(--receipt-bg)" stroke="none"/><polyline points="0,16 4,20 8,16 12,20 16,16 20,20 24,16 28,20 32,16 36,20 40,16 44,20 48,16" fill="var(--receipt-bg)" stroke="none"/></svg>
+          <span>뾰족뾰족</span>
+        </button>
+        <button class="edge-btn" onclick="setEdge('rounded',this)">
+          <svg width="48" height="20" viewBox="0 0 48 20"><rect x="2" y="2" width="44" height="16" rx="6" ry="6" fill="var(--border2)"/></svg>
+          <span>둥근 모서리</span>
+        </button>
+<button class="edge-btn" onclick="setEdge('square',this)">
+          <svg width="48" height="20" viewBox="0 0 48 20"><rect x="2" y="2" width="44" height="16" rx="0" fill="var(--border2)"/></svg>
+          <span>사각형</span>
+        </button>
+      </div>
+
+      <div class="section-head">왼쪽 상단 텍스트</div>
+      <div class="field">
+        <label class="field-label">텍스트 내용</label>
+        <div class="with-color">
+          <input type="text" id="admitText" value="화송이 영수증" placeholder="화송이 영수증" oninput="updateAdmit()">
+          <div class="color-dot" title="텍스트 색상">
+            <div class="color-dot-swatch" id="swatch-admitColor" style="background:#d94f5c"></div>
+            <input type="color" value="#d94f5c" oninput="setAdmitColor(this.value)">
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">이모티콘 빠른 추가</label>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">
+          <button class="emoji-btn" onclick="insertEmoji('🎟')">🎟</button>
+          <button class="emoji-btn" onclick="insertEmoji('🌸')">🌸</button>
+          <button class="emoji-btn" onclick="insertEmoji('✨')">✨</button>
+          <button class="emoji-btn" onclick="insertEmoji('🎀')">🎀</button>
+          <button class="emoji-btn" onclick="insertEmoji('💫')">💫</button>
+          <button class="emoji-btn" onclick="insertEmoji('🌙')">🌙</button>
+          <button class="emoji-btn" onclick="insertEmoji('⭐')">⭐</button>
+          <button class="emoji-btn" onclick="insertEmoji('🎵')">🎵</button>
+          <button class="emoji-btn" onclick="insertEmoji('💖')">💖</button>
+          <button class="emoji-btn" onclick="insertEmoji('🦋')">🦋</button>
+          <button class="emoji-btn" onclick="insertEmoji('🌟')">🌟</button>
+          <button class="emoji-btn" onclick="insertEmoji('🎪')">🎪</button>
+          <button class="emoji-btn" onclick="insertEmoji('—')">—</button>
+          <button class="emoji-btn" onclick="insertEmoji('·')">·</button>
+          <button class="emoji-btn" onclick="insertEmoji('★')">★</button>
+          <button class="emoji-btn" onclick="insertEmoji('♡')">♡</button>
+          <button class="emoji-btn" onclick="insertEmoji('◆')">◆</button>
+          <button class="emoji-btn" onclick="insertEmoji('※')">※</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- sidebar -->
+
+<!-- PREVIEW -->
+<div class="preview-area">
+  <div class="receipt-wrap" id="receiptWrap">
+    <div class="tear tear-top"></div>
+    <div class="receipt" id="receipt">
+      <div class="receipt-inner">
+        <div class="r-topline">
+          <div class="r-admit" id="pAdmit">화송이 영수증</div>
+          <div class="r-date" id="pDate">2020-03-04</div>
+        </div>
+        <!-- 이미지 1 고정, 이미지 2+ 추가 -->
+        <div id="pBannerFixed"></div>
+        <div id="pBannerExtra"></div>
+        <div class="r-title-area" id="pTitleArea">
+          <div class="r-main-title" id="pMainTitle">SHIROLILY</div>
+          <div class="r-sub-title" id="pSubTitle">카네사키 시로x릴리 디아즈</div>
+          <div class="r-tags" id="pTags" style="display:none"></div>
+        </div>
+        <div class="r-info-section r-dashed" id="pInfoSection"></div>
+        <div id="pFreeSections"></div>
+        <div id="pMiscSections"></div>
+        <div class="r-note" id="pNote"></div>
+        <div class="r-barcode">
+          <svg id="pBarcode" viewBox="0 0 300 50" preserveAspectRatio="none"></svg>
+          <div class="r-barcode-num" id="pBarcodeNum">780541239876</div>
+        </div>
+      </div><!-- receipt-inner -->
+    </div><!-- receipt -->
+    <div class="tear tear-bottom"></div>
+  </div>
+</div>
+
+</div><!-- app-body -->
+
+<!-- WELCOME MODAL -->
+<div class="modal-overlay" id="welcomeModal">
+  <div class="modal-box">
+    <div class="modal-title">🎟 화송이 영수증에 오신 것을 환영해요!</div>
+    <div class="modal-sub">사용 전 아래 내용을 꼭 읽어주세요.</div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">💡 기본 사용법</div>
+      <div class="modal-row"><span class="modal-icon">📝</span><span><b>프로필 탭</b> — 타이틀, 부제목, 정보 항목 등 내용을 입력해요</span></div>
+      <div class="modal-row"><span class="modal-icon">🖼️</span><span><b>이미지 탭</b> — 배너 이미지를 추가하고 드래그·휠로 조절해요</span></div>
+      <div class="modal-row"><span class="modal-icon">🎨</span><span><b>디자인 탭</b> — 색상, 폰트, 배경, 엣지 스타일 등을 꾸며요</span></div>
+      <div class="modal-row"><span class="modal-icon">⬇️</span><span>완성되면 우측 상단 <b>이미지 저장</b> 버튼으로 PNG로 저장해요</span></div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">💾 저장 안내</div>
+      <div class="modal-row"><span class="modal-icon">💾</span><span>상단 <b>저장</b> 버튼을 누르면 텍스트·색상·스타일 설정이 이 브라우저에 저장돼요</span></div>
+      <div class="modal-row"><span class="modal-icon">📂</span><span><b>불러오기</b> 버튼으로 마지막 저장 상태를 복원할 수 있어요</span></div>
+      <div class="modal-row"><span class="modal-icon">🖼️</span><span>단, <b>업로드한 이미지는 저장되지 않아요.</b> 매번 다시 업로드해야 해요</span></div>
+    </div>
+
+    <div class="modal-warn">
+      ⚠️ <strong>캐시 삭제 시 주의!</strong>
+      저장 데이터는 브라우저의 <b>로컬스토리지</b>에 보관돼요.<br>
+      브라우저 캐시·사이트 데이터를 삭제하거나, 시크릿 모드·다른 브라우저를 사용하면 <b>저장된 내용이 함께 삭제</b>될 수 있어요.<br>
+      중요한 설정은 <b>이미지 저장</b>으로 백업해 두는 것을 추천해요! 🙏
+    </div>
+
+    <button class="modal-close" onclick="closeWelcome()">✅ 확인했어요, 시작할게요!</button>
+  </div>
+</div>
+
+<script>
+// ─── COLOR STATE ───
+// Each field key maps to a color
+let colors = {
+  mainTitle: '#d94f5c',
+  subTitle: '#c0b8b0',
+  ticketDate: '#c0b8b0',
+  noteText: '#c0b8b0',
+  barcodeMain: '#1a1a1a',
+  barcodeSub: '#d94f5c',
+  admitColor: '#d94f5c',
+  dividerColor: '#c0b8b0',
+};
+
+// ─── DATA STATE ───
+let state = {
+  nickStyle: 'filled',
+  outlineColor: '#1a1a1a',
+  font: 'gothic',
+  tagStyle: 'filled',
+  tagColor: '#d94f5c',
+  tags: [],
+  infoRows: [
+    {label:'항목', value:'내용을 자유롭게 작성해주세요', labelColor:'#d94f5c', valueColor:'#1a1a1a'},
+  ],
+  freeSections: [
+    {label:'FREE', labelColor:'#d94f5c', contentColor:'#1a1a1a', content:'내용을 자유롭게 작성해주세요'}
+  ],
+  miscSections: [
+    {title:'소지 목록', titleColor:'#d94f5c', items:['물병','카메라'], itemColor:'#1a1a1a'},
+  ],
+  banners: [{src:null,imgObj:null,x:0,y:0,scale:1,canvasH:180}],  // index 0 is fixed top banner
+};
+
+// ─── FIELD COLOR SETTER ───
+function setFieldColor(field, val) {
+  colors[field] = val;
+  const sw = document.getElementById('swatch-'+field);
+  if(sw) sw.style.background = val;
+  render();
+}
+
+// ─── TABS ───
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+// ─── NICK STYLE ───
+function setNickStyle(s, el) {
+  state.nickStyle = s;
+  document.querySelectorAll('.style-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  const row = document.getElementById('outlineColorRow');
+  row.style.display = s==='outline' ? 'flex' : 'none';
+  render();
+}
+
+function setOutlineColor(val){
+  state.outlineColor = val;
+  document.getElementById('swatch-outlineColor').style.background = val;
+  render();
+}
+
+// ─── FONT ───
+function setFont(f, el) {
+  state.font = f;
+  document.querySelectorAll('.font-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('receipt').classList.toggle('mono-font', f==='mono');
+}
+
+// ─── GLOBAL ACCENT ───
+document.getElementById('swatches').addEventListener('click', e=>{
+  const sw = e.target.closest('.swatch'); if(!sw) return;
+  document.querySelectorAll('#swatches .swatch').forEach(s=>s.classList.remove('active'));
+  sw.classList.add('active');
+  const c = sw.dataset.c;
+  // Apply to all "accent" color fields
+  const accentFields = ['mainTitle','barcodeSub'];
+  accentFields.forEach(f => {
+    colors[f] = c;
+    if(f==='barcodeSub'){
+      document.getElementById('swatch-barcodeSub').style.background=c;
+      document.querySelector('#swatch-barcodeSub').closest('.color-dot').querySelector('input[type=color]').value=c;
+    } else {
+      const sw2 = document.getElementById('swatch-'+f);
+      if(sw2) sw2.style.background = c;
+      const inp = document.querySelector(`#dot-${f} input[type=color]`);
+      if(inp) inp.value = c;
+    }
+  });
+  // Also update infoRow label colors
+  state.infoRows.forEach(r => r.labelColor = c);
+  state.freeSections.forEach(s => s.labelColor = c);
+  state.miscSections.forEach(s => s.titleColor = c);
+  renderInfoEditor();
+  renderFreeSections();
+  renderMiscEditor();
+  render();
+});
+
+// ─── TAG STYLE ───
+function setTagStyle(s, el){
+  state.tagStyle = s;
+  document.querySelectorAll('#tagStyleFilled,#tagStyleOutline').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+function setTagColor(val){
+  state.tagColor = val;
+  document.getElementById('swatch-tagColor').style.background = val;
+  render();
+}
+
+// ─── TAGS ───
+function tagKeydown(e) {
+  if(e.key==='Enter'||e.key===','){
+    e.preventDefault();
+    const v=e.target.value.trim().replace(/,/g,'');
+    if(v&&!state.tags.includes(v)){state.tags.push(v);renderTagEditor();render();}
+    e.target.value='';
+  } else if(e.key==='Backspace'&&e.target.value===''&&state.tags.length){
+    state.tags.pop();renderTagEditor();render();
+  }
+}
+function removeTag(i){state.tags.splice(i,1);renderTagEditor();render();}
+function renderTagEditor(){
+  const wrap=document.getElementById('tagsWrap');
+  const input=document.getElementById('tagInput');
+  wrap.innerHTML='';
+  state.tags.forEach((t,i)=>{
+    const chip=document.createElement('div');chip.className='tag-chip';
+    chip.innerHTML=`${t}<button onclick="removeTag(${i})">✕</button>`;
+    wrap.appendChild(chip);
+  });
+  wrap.appendChild(input);
+}
+
+// ─── INFO ROWS ───
+function renderInfoEditor(){
+  const cont=document.getElementById('infoRowsEditor');cont.innerHTML='';
+  state.infoRows.forEach((r,i)=>{
+    const d=document.createElement('div');d.className='info-row-editor';
+    d.innerHTML=`
+      <div class="info-row-editor-top">
+        <div class="info-label-row" style="flex:1;gap:4px">
+          <div class="color-dot-sm" title="라벨 색상">
+            <div class="color-dot-sm-swatch" style="background:${r.labelColor}"></div>
+            <input type="color" value="${r.labelColor}" oninput="state.infoRows[${i}].labelColor=this.value;this.previousElementSibling.style.background=this.value;render()">
+          </div>
+          <input value="${esc(r.label)}" placeholder="라벨" style="flex:1;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;background:white;font-size:12px;font-family:'Courier Prime',monospace;color:var(--text);outline:none" oninput="state.infoRows[${i}].label=this.value;render()">
+        </div>
+        <button class="btn-x" onclick="state.infoRows.splice(${i},1);renderInfoEditor();render()">✕</button>
+      </div>
+      <div class="info-row-editor-bottom">
+        <textarea placeholder="내용" oninput="state.infoRows[${i}].value=this.value;render()" rows="2">${esc(r.value)}</textarea>
+        <div class="color-dot-sm" title="내용 색상" style="margin-top:1px">
+          <div class="color-dot-sm-swatch" style="background:${r.valueColor}"></div>
+          <input type="color" value="${r.valueColor}" oninput="state.infoRows[${i}].valueColor=this.value;this.previousElementSibling.style.background=this.value;render()">
+        </div>
+      </div>`;
+    cont.appendChild(d);
+  });
+}
+function addInfoRow(){
+  const ac=colors.mainTitle||'#d94f5c';
+  state.infoRows.push({label:'LABEL',value:'',labelColor:ac,valueColor:'#1a1a1a'});
+  renderInfoEditor();render();
+}
+
+// ─── FREE SECTIONS ───
+function renderFreeSections(){
+  const cont=document.getElementById('freeSections');cont.innerHTML='';
+  state.freeSections.forEach((s,i)=>{
+    const d=document.createElement('div');d.className='free-section-editor';
+    d.innerHTML=`
+      <div class="free-section-header">
+        <span class="free-section-num">${i+1}. 섹션</span>
+        <button class="btn-x" onclick="state.freeSections.splice(${i},1);renderFreeSections();render()">✕</button>
+      </div>
+      <div style="display:flex;gap:5px;margin-bottom:6px;align-items:center">
+        <div class="color-dot-sm" title="라벨 색상">
+          <div class="color-dot-sm-swatch" style="background:${s.labelColor}"></div>
+          <input type="color" value="${s.labelColor}" oninput="state.freeSections[${i}].labelColor=this.value;this.previousElementSibling.style.background=this.value;render()">
+        </div>
+        <input type="text" value="${esc(s.label)}" placeholder="섹션 라벨" oninput="state.freeSections[${i}].label=this.value;render()" style="flex:1">
+      </div>
+      <div style="display:flex;gap:5px;align-items:flex-start">
+        <div class="color-dot-sm" title="내용 색상" style="margin-top:1px">
+          <div class="color-dot-sm-swatch" style="background:${s.contentColor}"></div>
+          <input type="color" value="${s.contentColor}" oninput="state.freeSections[${i}].contentColor=this.value;this.previousElementSibling.style.background=this.value;render()">
+        </div>
+        <textarea placeholder="내용..." oninput="state.freeSections[${i}].content=this.value;render()" rows="3" style="flex:1">${esc(s.content)}</textarea>
+      </div>`;
+    cont.appendChild(d);
+  });
+}
+function addFreeSection(){
+  const ac=colors.mainTitle||'#d94f5c';
+  state.freeSections.push({label:'SECTION',labelColor:ac,contentColor:'#1a1a1a',content:''});
+  renderFreeSections();render();
+}
+
+// ─── MISC SECTIONS ───
+function renderMiscEditor(){
+  const cont=document.getElementById('miscSections');cont.innerHTML='';
+  state.miscSections.forEach((sec,si)=>{
+    const d=document.createElement('div');d.className='free-section-editor';
+    const itemsHtml=sec.items.map((item,ii)=>`
+      <div style="display:flex;gap:4px;align-items:center;margin-bottom:4px">
+        <input type="text" value="${esc(item)}" placeholder="항목..." style="flex:1;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;background:white;font-size:12px;font-family:'Noto Sans KR',sans-serif;outline:none" oninput="state.miscSections[${si}].items[${ii}]=this.value;render()">
+        <button class="btn-x" onclick="state.miscSections[${si}].items.splice(${ii},1);renderMiscEditor();render()">✕</button>
+      </div>`).join('');
+    d.innerHTML=`
+      <div class="free-section-header">
+        <span class="free-section-num">${si+1}. 기타사항 세션</span>
+        <button class="btn-x" onclick="state.miscSections.splice(${si},1);renderMiscEditor();render()">✕</button>
+      </div>
+      <div style="display:flex;gap:5px;margin-bottom:8px;align-items:center">
+        <div class="color-dot-sm" title="제목 색상">
+          <div class="color-dot-sm-swatch" style="background:${sec.titleColor}"></div>
+          <input type="color" value="${sec.titleColor}" oninput="state.miscSections[${si}].titleColor=this.value;this.previousElementSibling.style.background=this.value;render()">
+        </div>
+        <input type="text" value="${esc(sec.title)}" placeholder="소제목 (예: 소지 목록)" style="flex:1;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;background:white;font-size:12px;font-family:'Noto Sans KR',sans-serif;outline:none" oninput="state.miscSections[${si}].title=this.value;render()">
+      </div>
+      <div style="display:flex;gap:5px;margin-bottom:5px;align-items:center">
+        <div class="color-dot-sm" title="항목 색상">
+          <div class="color-dot-sm-swatch" style="background:${sec.itemColor}"></div>
+          <input type="color" value="${sec.itemColor}" oninput="state.miscSections[${si}].itemColor=this.value;this.previousElementSibling.style.background=this.value;render()">
+        </div>
+        <span style="font-size:11px;color:var(--muted)">항목 색상</span>
+      </div>
+      <div id="misc-items-${si}">${itemsHtml}</div>
+      <button class="btn-add" style="margin-top:2px" onclick="state.miscSections[${si}].items.push('');renderMiscEditor();render()">+ 항목 추가</button>`;
+    cont.appendChild(d);
+  });
+}
+function addMiscSection(){
+  const ac=colors.mainTitle||'#d94f5c';
+  state.miscSections.push({title:'소제목',titleColor:ac,items:[''],itemColor:'#1a1a1a'});
+  renderMiscEditor();render();
+}
+
+// ─── MULTI-BANNER IMAGE SYSTEM ───
+// state.banners = [{src, imgObj, x, y, scale, canvasH}, ...]
+// drag state per canvas: keyed by index
+let dragState = {}; // {idx: {active,startX,startY,ox,oy}}
+
+function addBannerSlot(){
+  state.banners.push({src:null,imgObj:null,x:0,y:0,scale:1,canvasH:180});
+  renderBannerEditor();
+}
+
+function removeBanner(idx){
+  state.banners.splice(idx,1);
+  renderBannerEditor();
+  renderBannerBlocks();
+}
+
+function renderBannerEditor(){
+  const cont=document.getElementById('bannerCardsEditor');
+  cont.innerHTML='';
+  state.banners.forEach((b,i)=>{
+    const card=document.createElement('div');
+    card.className='banner-card';
+    const hasImg=!!b.src;
+    card.innerHTML=`
+      <div class="banner-card-header">
+        <span class="banner-card-num">이미지 ${i+1}</span>
+        <button class="btn-x" onclick="removeBanner(${i})">✕</button>
+      </div>
+      <div class="upload-zone ${hasImg?'has-img':''}" id="bzone-${i}" style="margin-bottom:${hasImg?'8px':'0'}">
+        <input type="file" accept="image/*" onchange="loadBannerImg(event,${i})">
+        <div class="upload-hint" id="bhint-${i}" style="display:${hasImg?'none':'block'}"><em>🖼️</em>클릭해서 업로드</div>
+        <img id="bpreview-${i}" src="${hasImg?b.src:''}" style="display:${hasImg?'block':'none'}">
+        <button class="btn-clear-img" onclick="clearBannerImg(event,${i})" style="display:${hasImg?'flex':'none'}">✕</button>
+      </div>
+      ${hasImg?`
+      <div class="img-ctrl-row"><label>크기</label>
+        <input type="range" id="bscale-${i}" min="10" max="400" value="${Math.round(b.scale*100)}" step="1" oninput="updateBanner(${i},'scale',this.value/100);document.getElementById('bscalev-${i}').textContent=this.value+'%'">
+        <span id="bscalev-${i}">${Math.round(b.scale*100)}%</span>
+      </div>
+      <div class="img-ctrl-row"><label>높이</label>
+        <input type="range" id="bheight-${i}" min="60" max="320" value="${b.canvasH}" step="4" oninput="updateBanner(${i},'canvasH',parseInt(this.value));document.getElementById('bheightv-${i}').textContent=this.value+'px'">
+        <span id="bheightv-${i}">${b.canvasH}px</span>
+      </div>
+      <button class="btn-add" style="margin-top:6px" onclick="resetBanner(${i})">↺ 초기화</button>
+      `:''}`;
+    cont.appendChild(card);
+  });
+}
+
+function loadBannerImg(e,idx){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const b=state.banners[idx];
+    b.src=ev.target.result;
+    b.x=0;b.y=0;
+    const img=new Image();
+    img.onload=()=>{
+      b.imgObj=img;
+      const canvas=document.getElementById('pcanvas-'+idx);
+      const cw=canvas?canvas.offsetWidth:336;
+      b.scale=cw/img.width;
+      renderBannerEditor();
+      renderBannerBlocks();
+      // after blocks rendered, draw
+      setTimeout(()=>drawCanvas(idx),50);
+    };
+    img.src=ev.target.result;
+  };
+  r.readAsDataURL(file);
+}
+
+function clearBannerImg(e,idx){
+  e.stopPropagation();e.preventDefault();
+  const b=state.banners[idx];
+  b.src=null;b.imgObj=null;b.x=0;b.y=0;b.scale=1;b.canvasH=180;
+  renderBannerEditor();
+  renderBannerBlocks();
+}
+
+function updateBanner(idx,key,val){
+  state.banners[idx][key]=val;
+  drawCanvas(idx);
+}
+
+function resetBanner(idx){
+  const b=state.banners[idx];
+  if(!b.imgObj)return;
+  const canvas=document.getElementById('pcanvas-'+idx);
+  const cw=canvas?canvas.offsetWidth:336;
+  b.scale=cw/b.imgObj.width;b.x=0;b.y=0;
+  document.getElementById('bscale-'+idx).value=Math.round(b.scale*100);
+  document.getElementById('bscalev-'+idx).textContent=Math.round(b.scale*100)+'%';
+  drawCanvas(idx);
+}
+
+function drawCanvas(idx){
+  const b=state.banners[idx];
+  const canvas=document.getElementById('pcanvas-'+idx);
+  if(!canvas||!b.imgObj)return;
+  const dpr=window.devicePixelRatio||1;
+  const cw=canvas.offsetWidth||336;
+  const ch=b.canvasH;
+  canvas.style.height=ch+'px';
+  canvas.width=cw*dpr;canvas.height=ch*dpr;
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,cw,ch);
+  ctx.drawImage(b.imgObj,b.x,b.y,b.imgObj.width*b.scale,b.imgObj.height*b.scale);
+}
+
+function renderBannerBlocks(){
+  const fixed=document.getElementById('pBannerFixed');
+  const extra=document.getElementById('pBannerExtra');
+  fixed.innerHTML='';
+  extra.innerHTML='';
+
+  // 이미지 0번 슬롯 — 항상 고정 위치에 표시
+  const b0 = state.banners[0];
+  const fixedDiv = document.createElement('div');
+  fixedDiv.className = 'r-image-block';
+  if(b0 && b0.src && b0.imgObj){
+    fixedDiv.innerHTML = `<canvas id="pcanvas-0" class="r-image-canvas" style="height:${b0.canvasH}px"></canvas>`;
+  } else {
+    // 항상 플레이스홀더 표시 (고정 높이)
+    fixedDiv.innerHTML = `<div class="r-image-placeholder">[ IMAGE ]</div>`;
+  }
+  fixed.appendChild(fixedDiv);
+
+  // 이미지 1번 이상 — 본문 안 간격 포함
+  state.banners.forEach((b,i)=>{
+    if(i===0) return;
+    const div=document.createElement('div');
+    div.className='r-image-block-extra';
+    if(b.src&&b.imgObj){
+      div.innerHTML=`<canvas id="pcanvas-${i}" class="r-image-canvas" style="height:${b.canvasH}px"></canvas>`;
+    } else {
+      div.innerHTML=`<div class="r-image-placeholder">[ IMAGE ${i+1} ]</div>`;
+    }
+    extra.appendChild(div);
+  });
+
+  // 드래그·휠 이벤트 연결
+  state.banners.forEach((b,i)=>{
+    if(!b.src)return;
+    const canvas=document.getElementById('pcanvas-'+i);
+    if(!canvas)return;
+    attachCanvasEvents(canvas,i);
+    setTimeout(()=>drawCanvas(i),20);
+  });
+}
+
+function attachCanvasEvents(canvas,idx){
+  // remove old listeners by cloning
+  const fresh=canvas.cloneNode(true);
+  canvas.parentNode.replaceChild(fresh,canvas);
+  const c=document.getElementById('pcanvas-'+idx);
+
+  let drag={active:false,sx:0,sy:0,ox:0,oy:0};
+  c.addEventListener('mousedown',e=>{
+    drag={active:true,sx:e.clientX,sy:e.clientY,ox:state.banners[idx].x,oy:state.banners[idx].y};
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove',e=>{
+    if(!drag.active)return;
+    state.banners[idx].x=drag.ox+(e.clientX-drag.sx);
+    state.banners[idx].y=drag.oy+(e.clientY-drag.sy);
+    drawCanvas(idx);
+  });
+  window.addEventListener('mouseup',()=>{drag.active=false;});
+  c.addEventListener('wheel',e=>{
+    e.preventDefault();
+    const d=e.deltaY>0?-0.03:0.03;
+    const b=state.banners[idx];
+    b.scale=Math.max(0.05,Math.min(10,b.scale+d));
+    const scEl=document.getElementById('bscale-'+idx);
+    const scVEl=document.getElementById('bscalev-'+idx);
+    if(scEl){scEl.value=Math.round(b.scale*100);scVEl.textContent=Math.round(b.scale*100)+'%';}
+    drawCanvas(idx);
+  },{passive:false});
+}
+
+function initCanvasDrag(){ /* replaced by per-canvas attachment */ }
+
+// ─── RENDER ───
+function render(){
+  // date
+  const dateEl=document.getElementById('pDate');
+  dateEl.textContent=document.getElementById('ticketDate').value||'';
+  dateEl.style.color=colors.ticketDate;
+
+  // main title
+  const titleEl=document.getElementById('pMainTitle');
+  const titleText=document.getElementById('mainTitle').value||'';
+  const tc=colors.mainTitle;
+  if(state.nickStyle==='filled'){
+    titleEl.style.cssText=`font-size:${state.titleSize}px;font-weight:900;line-height:1.1;word-break:keep-all;background:${tc};color:white;display:inline-block;padding:0 6px`;
+  } else if(state.nickStyle==='outline'){
+    const oc=state.outlineColor||'#1a1a1a';titleEl.style.cssText=`font-size:${state.titleSize}px;font-weight:900;line-height:1.1;word-break:keep-all;color:${tc};-webkit-text-stroke:2px ${oc};display:inline-block;background:transparent;paint-order:stroke fill`;
+  } else {
+    titleEl.style.cssText=`font-size:${state.titleSize}px;font-weight:900;line-height:1.1;word-break:keep-all;color:${tc}`;
+  }
+  titleEl.textContent=titleText;
+
+  // subtitle
+  const subEl=document.getElementById('pSubTitle');
+  subEl.textContent=document.getElementById('subTitle').value||'';
+  subEl.style.color=colors.subTitle;
+
+  // tags
+  const tagsEl=document.getElementById('pTags');
+  const titleArea=document.getElementById('pTitleArea');
+  if(state.tags.length){
+    tagsEl.style.display='flex';
+    // 태그 있으면 title-area border 제거, 태그 아래에 점선
+    titleArea.style.borderBottom='none';
+    tagsEl.style.borderBottom='1px dashed var(--receipt-faint)';
+    tagsEl.style.paddingBottom='8px';
+    document.getElementById('pInfoSection').style.borderTop='none';
+    const tc=state.tagColor;
+    tagsEl.innerHTML=state.tags.map(t=>{
+      if(state.tagStyle==='filled'){
+        return `<span class="r-tag" style="background:${tc};color:white;border-color:${tc}">${t}</span>`;
+      } else {
+        return `<span class="r-tag" style="background:transparent;color:${tc};border-color:${tc}">${t}</span>`;
+      }
+    }).join('');
+  } else {
+    tagsEl.style.display='none';
+    // 태그 없으면 title-area border 복원
+    titleArea.style.borderBottom='';
+    document.getElementById('pInfoSection').style.borderTop='';
+  }
+
+  // info rows
+  const infoEl=document.getElementById('pInfoSection');
+  infoEl.innerHTML=state.infoRows.map(r=>
+    `<div class="r-info-row">
+      <div class="r-info-label" style="color:${r.labelColor}">${esc(r.label)}</div>
+      <div class="r-info-value" style="color:${r.valueColor}">${esc(r.value)}</div>
+    </div>`
+  ).join('');
+  infoEl.style.display=state.infoRows.length?'block':'none';
+
+  // free sections
+  const freeEl=document.getElementById('pFreeSections');
+  freeEl.innerHTML=state.freeSections.map(s=>
+    `<div class="r-free-section">
+      <div class="r-free-label" style="color:${s.labelColor}">${esc(s.label)}</div>
+      <div class="r-free-content" style="color:${s.contentColor}">${esc(s.content)}</div>
+    </div>`
+  ).join('');
+
+  // misc sections
+  const miscEl=document.getElementById('pMiscSections');
+  miscEl.innerHTML=state.miscSections.map(sec=>{
+    const items=sec.items.filter(x=>x.trim());
+    if(!items.length&&!sec.title.trim())return'';
+    return `<div class="r-checklist">
+      <div class="r-checklist-title" style="color:${sec.titleColor}">${esc(sec.title)}</div>
+      <div class="r-checklist-items">${items.map(item=>`<div class="r-checklist-item" style="color:${sec.itemColor}">${esc(item)}</div>`).join('')}</div>
+    </div>`;
+  }).join('');
+
+  // note
+  const noteEl=document.getElementById('pNote');
+  const noteVal=document.getElementById('noteText').value||'';
+  noteEl.textContent=noteVal;
+  noteEl.style.color=colors.noteText;
+  noteEl.style.display=noteVal?'block':'none';
+
+  // banners: just redraw existing canvases, don't rebuild DOM
+  state.banners.forEach((b,i)=>{ if(b.imgObj) drawCanvas(i); });
+
+  renderBarcode(document.getElementById('barcodeNum').value||'000000000000');
+}
+
+function renderBarcode(num){
+  const svg=document.getElementById('pBarcode');
+  document.getElementById('pBarcodeNum').textContent=num;
+  document.getElementById('pBarcodeNum').style.color=colors.barcodeMain;
+  const seed=num.replace(/\D/g,'').padEnd(12,'0').split('').map(Number);
+  const bars=[];const N=80;
+  for(let i=0;i<N;i++){
+    const s=seed[i%seed.length];
+    const w=i%3===0?(s%2===0?4:2):(i%5===0?3:1.5);
+    bars.push(w);
+  }
+  const totalW=bars.reduce((a,b)=>a+b+1,0);
+  const sc=300/totalW;
+  let x=0,html='';
+  bars.forEach((w,i)=>{
+    const bw=w*sc;
+    const isAc=i%13===0||i%17===0;
+    html+=`<rect x="${x.toFixed(2)}" y="0" width="${bw.toFixed(2)}" height="50" fill="${isAc?colors.barcodeSub:colors.barcodeMain}"/>`;
+    x+=bw+sc;
+  });
+  svg.innerHTML=html;
+}
+
+function setBarcodeColor(type, val){
+  if(type==='main'){
+    colors.barcodeMain=val;
+    document.getElementById('swatch-barcodeMain').style.background=val;
+  } else {
+    colors.barcodeSub=val;
+    document.getElementById('swatch-barcodeSub').style.background=val;
+  }
+  renderBarcode(document.getElementById('barcodeNum').value||'000000000000');
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ─── EDGE STYLE ───
+function setEdge(style, el) {
+  document.querySelectorAll('.edge-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  const wrap = document.getElementById('receiptWrap');
+  wrap.classList.remove('edge-rounded','edge-square');
+  if(style==='rounded') wrap.classList.add('edge-rounded');
+  else if(style==='square') wrap.classList.add('edge-square');
+  // zigzag = default, no class needed
+}
+
+// ─── ADMIT TEXT ───
+function updateAdmit(){
+  const val = document.getElementById('admitText').value || '화송이 영수증';
+  const el = document.getElementById('pAdmit');
+  el.textContent = val;
+  el.style.color = colors.admitColor;
+  el.style.borderColor = colors.admitColor;
+}
+function setAdmitColor(val){
+  colors.admitColor = val;
+  document.getElementById('swatch-admitColor').style.background = val;
+  updateAdmit();
+}
+function insertEmoji(ch){
+  const inp = document.getElementById('admitText');
+  const start = inp.selectionStart;
+  const end = inp.selectionEnd;
+  const val = inp.value;
+  inp.value = val.slice(0,start) + ch + val.slice(end);
+  inp.selectionStart = inp.selectionEnd = start + ch.length;
+  inp.focus();
+  updateAdmit();
+}
+
+// ─── DIVIDER COLOR ───
+function setDividerColor(val){
+  colors.dividerColor = val;
+  document.getElementById('swatch-dividerColor').style.background = val;
+  document.documentElement.style.setProperty('--receipt-faint', val);
+}
+
+// ─── BG COLOR ───
+function setBgColor(val, source){
+  state.bgColor = val;
+  document.documentElement.style.setProperty('--receipt-bg', val);
+  document.getElementById('bgColorInput').value = val;
+  document.getElementById('bgCustomPreview').style.background = val;
+  // active 표시
+  document.querySelectorAll('[data-bg]').forEach(s=>s.classList.remove('active'));
+  if(source && source!=='custom' && source.classList){
+    source.classList.add('active');
+  }
+}
+
+// ─── DIVIDER ───
+function setDivider(style, el){
+  state.dividerStyle = style;
+  document.querySelectorAll('#div-dashed,#div-solid,#div-double,#div-wave').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  const r = document.getElementById('receipt');
+  r.classList.remove('r-divider-solid','r-divider-double','r-divider-wave');
+  if(style==='solid') r.classList.add('r-divider-solid');
+  else if(style==='double') r.classList.add('r-divider-double');
+  else if(style==='wave') r.classList.add('r-divider-wave');
+}
+
+// ─── TITLE SIZE ───
+function setTitleSize(val){
+  state.titleSize = parseInt(val);
+  document.getElementById('titleSizeVal').textContent = val+'px';
+  render();
+}
+
+// ─── SAVE / LOAD ───
+function saveSettings(){
+  const data = {
+    colors,
+    state: {
+      nickStyle: state.nickStyle,
+      outlineColor: state.outlineColor,
+      font: state.font,
+      tagStyle: state.tagStyle,
+      tagColor: state.tagColor,
+      tags: state.tags,
+      infoRows: state.infoRows,
+      freeSections: state.freeSections,
+      miscSections: state.miscSections,
+      titleSize: state.titleSize,
+      dividerStyle: state.dividerStyle,
+      bgColor: state.bgColor,
+    },
+    fields: {
+      mainTitle: document.getElementById('mainTitle').value,
+      subTitle: document.getElementById('subTitle').value,
+      ticketDate: document.getElementById('ticketDate').value,
+      noteText: document.getElementById('noteText').value,
+      barcodeNum: document.getElementById('barcodeNum').value,
+      admitText: document.getElementById('admitText').value,
+    }
+  };
+  try {
+    localStorage.setItem('ticketMakerSave', JSON.stringify(data));
+    showToast('💾 저장 완료!');
+  } catch(e) { showToast('저장 실패: ' + e.message); }
+}
+
+function loadSettings(){
+  try {
+    const raw = localStorage.getItem('ticketMakerSave');
+    if(!raw){ showToast('저장된 설정이 없어요.'); return; }
+    const data = JSON.parse(raw);
+    // colors
+    Object.assign(colors, data.colors);
+    // state (except banners/imgObj)
+    Object.assign(state, data.state);
+    // fields
+    const f = data.fields;
+    if(f.mainTitle) document.getElementById('mainTitle').value = f.mainTitle;
+    if(f.subTitle) document.getElementById('subTitle').value = f.subTitle;
+    if(f.ticketDate) document.getElementById('ticketDate').value = f.ticketDate;
+    if(f.noteText) document.getElementById('noteText').value = f.noteText;
+    if(f.barcodeNum) document.getElementById('barcodeNum').value = f.barcodeNum;
+    if(f.admitText) document.getElementById('admitText').value = f.admitText;
+    // apply color swatches
+    document.getElementById('swatch-mainTitle').style.background = colors.mainTitle;
+    document.getElementById('swatch-subTitle').style.background = colors.subTitle;
+    document.getElementById('swatch-ticketDate').style.background = colors.ticketDate;
+    document.getElementById('swatch-noteText').style.background = colors.noteText;
+    document.getElementById('swatch-barcodeMain').style.background = colors.barcodeMain;
+    document.getElementById('swatch-barcodeSub').style.background = colors.barcodeSub;
+    document.getElementById('swatch-admitColor').style.background = colors.admitColor||'#d94f5c';
+    document.getElementById('swatch-dividerColor').style.background = colors.dividerColor||'#c0b8b0';
+    // apply bg color
+    if(state.bgColor) document.documentElement.style.setProperty('--receipt-bg', state.bgColor);
+    // apply divider color
+    if(colors.dividerColor) document.documentElement.style.setProperty('--receipt-faint', colors.dividerColor);
+    // apply font
+    document.getElementById('receipt').classList.toggle('mono-font', state.font==='mono');
+    // apply title size slider
+    if(state.titleSize){
+      document.getElementById('titleSize').value = state.titleSize;
+      document.getElementById('titleSizeVal').textContent = state.titleSize + 'px';
+    }
+    // re-render editors
+    renderInfoEditor();
+    renderTagEditor();
+    renderFreeSections();
+    renderMiscEditor();
+    render();
+    updateAdmit();
+    showToast('📂 불러오기 완료!');
+  } catch(e) { showToast('불러오기 실패: ' + e.message); }
+}
+
+function showToast(msg){
+  let t = document.getElementById('toast');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:white;padding:10px 20px;border-radius:20px;font-size:13px;z-index:9999;pointer-events:none;transition:opacity .3s';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>{ t.style.opacity='0'; }, 2000);
+}
+
+function resetAll(){if(!confirm('초기화할까요?'))return;location.reload();}
+
+function downloadPNG(){
+  const go=()=>{
+    const wrap=document.getElementById('receiptWrap');
+    // 저장 전 preview-area 배경 임시 제거
+    const area=document.querySelector('.preview-area');
+    const prevBg=area.style.background;
+    area.style.background='transparent';
+    html2canvas(wrap,{scale:2,backgroundColor:null,useCORS:true,allowTaint:true}).then(c=>{
+      area.style.background=prevBg;
+      const a=document.createElement('a');a.download='ticket.png';a.href=c.toDataURL('image/png');a.click();
+    });
+  };
+  if(window.html2canvas){go();}else{
+    const sc=document.createElement('script');
+    sc.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    sc.onload=go;document.head.appendChild(sc);
+  }
+}
+
+// ─── WELCOME MODAL ───
+function closeWelcome(){
+  document.getElementById('welcomeModal').style.display='none';
+  localStorage.setItem('ticketMakerVisited','1');
+}
+// 이전 방문 여부 확인
+if(localStorage.getItem('ticketMakerVisited')){
+  document.getElementById('welcomeModal').style.display='none';
+}
+
+// INIT
+renderInfoEditor();
+renderTagEditor();
+renderFreeSections();
+renderMiscEditor();
+renderBannerEditor();
+renderBannerBlocks();
+render();
+</script>
+</body>
+</html>
