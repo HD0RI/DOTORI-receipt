@@ -324,16 +324,51 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <!-- Nick style -->
       <div class="field">
         <label class="field-label">타이틀 스타일</label>
-        <div class="style-row">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
           <button class="style-btn active" onclick="setNickStyle('filled',this)">■ 채움</button>
           <button class="style-btn" onclick="setNickStyle('outline',this)">□ 외곽선</button>
           <button class="style-btn" onclick="setNickStyle('plain',this)">가 텍스트만</button>
+          <button class="style-btn" onclick="setNickStyle('gradient',this)">🌈 그라데이션</button>
         </div>
-        <div id="outlineColorRow" style="display:none;align-items:center;gap:8px;margin-top:8px">
+
+        <!-- 외곽선 색상 -->
+        <div id="outlineColorRow" style="display:none;align-items:center;gap:8px;margin-bottom:8px">
           <span style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase">외곽선 색상</span>
           <div class="color-dot" id="dot-outlineColor" title="외곽선 색상">
             <div class="color-dot-swatch" id="swatch-outlineColor" style="background:#1a1a1a"></div>
             <input type="color" value="#1a1a1a" oninput="setOutlineColor(this.value)">
+          </div>
+        </div>
+
+        <!-- 그라데이션 옵션 -->
+        <div id="gradientRow" style="display:none;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11px;color:var(--muted);white-space:nowrap">색상 1</span>
+            <div class="color-dot">
+              <div class="color-dot-swatch" id="swatch-grad1" style="background:#d94f5c"></div>
+              <input type="color" id="grad1Input" value="#d94f5c" oninput="setGradColor(1,this.value)">
+            </div>
+            <span style="font-size:11px;color:var(--muted);white-space:nowrap">색상 2</span>
+            <div class="color-dot">
+              <div class="color-dot-swatch" id="swatch-grad2" style="background:#9b5de5"></div>
+              <input type="color" id="grad2Input" value="#9b5de5" oninput="setGradColor(2,this.value)">
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11px;color:var(--muted);white-space:nowrap">방향</span>
+            <div style="display:flex;gap:4px;flex-wrap:wrap">
+              <button class="style-btn active" id="gdir-to right" onclick="setGradDir('to right',this)" style="flex:unset;padding:4px 8px;font-size:11px">→</button>
+              <button class="style-btn" id="gdir-to left" onclick="setGradDir('to left',this)" style="flex:unset;padding:4px 8px;font-size:11px">←</button>
+              <button class="style-btn" id="gdir-to bottom" onclick="setGradDir('to bottom',this)" style="flex:unset;padding:4px 8px;font-size:11px">↓</button>
+              <button class="style-btn" id="gdir-135deg" onclick="setGradDir('135deg',this)" style="flex:unset;padding:4px 8px;font-size:11px">↘</button>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11px;color:var(--muted);white-space:nowrap">적용</span>
+            <div style="display:flex;gap:4px">
+              <button class="style-btn active" id="gapply-bg" onclick="setGradApply('bg',this)" style="flex:unset;padding:4px 8px;font-size:11px">박스 배경</button>
+              <button class="style-btn" id="gapply-text" onclick="setGradApply('text',this)" style="flex:unset;padding:4px 8px;font-size:11px">글자 색</button>
+            </div>
           </div>
         </div>
       </div>
@@ -444,7 +479,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <div id="bannerCardsEditor"></div>
       <button class="btn-add" onclick="addBannerSlot()">+ 이미지 추가</button>
 
-      <div class="section-head" style="margin-top:20px">저장 옵션</div>
+      <div class="section-head" style="margin-top:20px">배경</div>
 
       <!-- 여백 -->
       <div class="field">
@@ -779,8 +814,12 @@ let colors = {
 let state = {
   nickStyle: 'filled',
   outlineColor: '#1a1a1a',
+  gradColor1: '#d94f5c',
+  gradColor2: '#9b5de5',
+  gradDir: 'to right',
+  gradApply: 'bg',
   font: 'gothic',
-  titleEnFont: 'Playfair Display',
+  titleEnFont: 'Noto Sans KR',
   titleKoFont: 'Noto Sans KR',
   bodyEnFont: 'Noto Sans KR',
   bodyKoFont: 'Noto Sans KR',
@@ -796,7 +835,7 @@ let state = {
   miscSections: [
     {title:'소지 목록', titleColor:'#d94f5c', items:['물병','카메라'], itemColor:'#1a1a1a'},
   ],
-  banners: [{src:null,imgObj:null,x:0,y:0,scale:1,canvasH:180,bgColor:'#e8e0d5'}],  // index 0 is fixed top banner
+  banners: [{src:null,imgObj:null,x:0,y:0,scale:1,canvasH:180,bgColor:'#e8e0d5',bgType:'color',bgGrad1:'#d94f5c',bgGrad2:'#9b5de5',bgGradDir:'to right'}],  // index 0 is fixed top banner
 };
 
 // ─── FIELD COLOR SETTER ───
@@ -818,10 +857,31 @@ function switchTab(name, el) {
 // ─── NICK STYLE ───
 function setNickStyle(s, el) {
   state.nickStyle = s;
-  document.querySelectorAll('.style-btn').forEach(b=>b.classList.remove('active'));
+  // style-row 버튼만 active 처리
+  el.closest('div').querySelectorAll('.style-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  const row = document.getElementById('outlineColorRow');
-  row.style.display = s==='outline' ? 'flex' : 'none';
+  document.getElementById('outlineColorRow').style.display = s==='outline' ? 'flex' : 'none';
+  document.getElementById('gradientRow').style.display = s==='gradient' ? 'flex' : 'none';
+  render();
+}
+
+function setGradColor(n, val){
+  if(n===1){ state.gradColor1=val; document.getElementById('swatch-grad1').style.background=val; }
+  else      { state.gradColor2=val; document.getElementById('swatch-grad2').style.background=val; }
+  render();
+}
+
+function setGradDir(dir, el){
+  state.gradDir = dir;
+  document.querySelectorAll('[id^="gdir-"]').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+function setGradApply(apply, el){
+  state.gradApply = apply;
+  document.querySelectorAll('[id^="gapply-"]').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
   render();
 }
 
@@ -858,18 +918,15 @@ function applyFonts(){
   });
 }
 
-function setTitleEnFont(font, el){
-  state.titleEnFont = font;
-  document.querySelectorAll('#tef-grid .font-btn').forEach(b=>b.classList.remove('active'));
+function setTitleFontCombo(en, ko, el){
+  state.titleEnFont = en;
+  state.titleKoFont = ko;
+  document.querySelectorAll('#title-font-grid .font-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
   applyFonts(); render();
 }
-function setTitleKoFont(font, el){
-  state.titleKoFont = font;
-  document.querySelectorAll('#tkf-grid .font-btn').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
-  applyFonts(); render();
-}
+function setTitleEnFont(font, el){ state.titleEnFont=font; applyFonts(); render(); }
+function setTitleKoFont(font, el){ state.titleKoFont=font; applyFonts(); render(); }
 function setBodyEnFont(font, el){
   state.bodyEnFont = font;
   document.querySelectorAll('#bef-grid .font-btn').forEach(b=>b.classList.remove('active'));
@@ -1062,7 +1119,7 @@ function addMiscSection(){
 let dragState = {}; // {idx: {active,startX,startY,ox,oy}}
 
 function addBannerSlot(){
-  state.banners.push({src:null,imgObj:null,x:0,y:0,scale:1,canvasH:180,bgColor:'#e8e0d5'});
+  state.banners.push({src:null,imgObj:null,x:0,y:0,scale:1,canvasH:180,bgColor:'#e8e0d5',bgType:'color',bgGrad1:'#d94f5c',bgGrad2:'#9b5de5',bgGradDir:'to right'});
   renderBannerEditor();
 }
 
@@ -1081,7 +1138,7 @@ function removeBanner(idx){
   state.banners.splice(idx,1);
   // 항상 슬롯 0 유지
   if(state.banners.length === 0){
-    state.banners.push({src:null,imgObj:null,x:0,y:0,scale:1,canvasH:180,bgColor:'#e8e0d5'});
+    state.banners.push({src:null,imgObj:null,x:0,y:0,scale:1,canvasH:180,bgColor:'#e8e0d5',bgType:'color',bgGrad1:'#d94f5c',bgGrad2:'#9b5de5',bgGradDir:'to right'});
   }
   renderBannerEditor();
   renderBannerBlocks();
@@ -1109,16 +1166,40 @@ function renderBannerEditor(){
         <img id="bpreview-${i}" src="${hasImg?b.src:''}" style="display:${hasImg?'block':'none'}">
         <button class="btn-clear-img" onclick="clearBannerImg(event,${i})" style="display:${hasImg?'flex':'none'}">✕</button>
       </div>
-      <div class="img-ctrl-row" style="margin-top:6px"><label>배경</label>
-        <div style="display:flex;align-items:center;gap:6px;flex:1">
+      <div style="margin-top:8px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px">배경 스타일</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:6px">
+          <button class="style-btn ${b.bgType==='color'||!b.bgType?'active':''}" onclick="setBannerBgType(${i},'color',this)">단색</button>
+          <button class="style-btn ${b.bgType==='gradient'?'active':''}" onclick="setBannerBgType(${i},'gradient',this)">그라데이션</button>
+          <button class="style-btn ${b.bgType==='transparent'?'active':''}" onclick="setBannerBgType(${i},'transparent',this)">투명</button>
+        </div>
+        <!-- 단색 -->
+        <div id="bbg-color-${i}" style="display:${(!b.bgType||b.bgType==='color')?'flex':'none'};align-items:center;gap:6px">
           <div class="color-dot" style="width:26px;height:26px;border-radius:6px;flex-shrink:0">
             <div class="color-dot-swatch" id="bbgswatch-${i}" style="background:${b.bgColor||'#e8e0d5'};border-radius:5px"></div>
             <input type="color" value="${b.bgColor||'#e8e0d5'}" oninput="setBannerBg(${i},this.value)">
           </div>
-          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);cursor:pointer">
-            <input type="checkbox" id="bgtrans-${i}" ${b.bgColor==='transparent'?'checked':''} onchange="setBannerBg(${i},this.checked?'transparent':'#e8e0d5')">
-            투명
-          </label>
+          <span style="font-size:11px;color:var(--muted)">배경색</span>
+        </div>
+        <!-- 그라데이션 -->
+        <div id="bbg-gradient-${i}" style="display:${b.bgType==='gradient'?'flex':'none'};flex-direction:column;gap:5px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:11px;color:var(--muted);white-space:nowrap">색1</span>
+            <div class="color-dot" style="width:24px;height:24px;border-radius:6px;flex-shrink:0">
+              <div class="color-dot-swatch" id="bbggrad1swatch-${i}" style="background:${b.bgGrad1||'#d94f5c'};border-radius:5px"></div>
+              <input type="color" value="${b.bgGrad1||'#d94f5c'}" oninput="setBannerGrad(${i},1,this.value)">
+            </div>
+            <span style="font-size:11px;color:var(--muted);white-space:nowrap">색2</span>
+            <div class="color-dot" style="width:24px;height:24px;border-radius:6px;flex-shrink:0">
+              <div class="color-dot-swatch" id="bbggrad2swatch-${i}" style="background:${b.bgGrad2||'#9b5de5'};border-radius:5px"></div>
+              <input type="color" value="${b.bgGrad2||'#9b5de5'}" oninput="setBannerGrad(${i},2,this.value)">
+            </div>
+          </div>
+          <div style="display:flex;gap:4px">
+            <button class="style-btn ${(!b.bgGradDir||b.bgGradDir==='to right')?'active':''}" id="bgdir-right-${i}" onclick="setBannerGradDir(${i},'to right',this)" style="flex:unset;padding:3px 8px;font-size:11px">→</button>
+            <button class="style-btn ${b.bgGradDir==='to bottom'?'active':''}" id="bgdir-down-${i}" onclick="setBannerGradDir(${i},'to bottom',this)" style="flex:unset;padding:3px 8px;font-size:11px">↓</button>
+            <button class="style-btn ${b.bgGradDir==='135deg'?'active':''}" id="bgdir-diag-${i}" onclick="setBannerGradDir(${i},'135deg',this)" style="flex:unset;padding:3px 8px;font-size:11px">↘</button>
+          </div>
         </div>
       </div>
       ${hasImg?`
@@ -1172,6 +1253,47 @@ function updateBanner(idx,key,val){
   drawCanvas(idx);
 }
 
+function setBannerBgType(idx, type, el){
+  state.banners[idx].bgType = type;
+  if(type==='transparent') state.banners[idx].bgColor = 'transparent';
+  // UI 토글
+  const colorRow = document.getElementById('bbg-color-'+idx);
+  const gradRow  = document.getElementById('bbg-gradient-'+idx);
+  if(colorRow) colorRow.style.display = type==='color' ? 'flex' : 'none';
+  if(gradRow)  gradRow.style.display  = type==='gradient' ? 'flex' : 'none';
+  el.closest('div').querySelectorAll('.style-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  applyBannerBg(idx);
+}
+
+function setBannerGrad(idx, n, val){
+  if(n===1){ state.banners[idx].bgGrad1=val; const sw=document.getElementById('bbggrad1swatch-'+idx); if(sw) sw.style.background=val; }
+  else      { state.banners[idx].bgGrad2=val; const sw=document.getElementById('bbggrad2swatch-'+idx); if(sw) sw.style.background=val; }
+  applyBannerBg(idx);
+}
+
+function setBannerGradDir(idx, dir, el){
+  state.banners[idx].bgGradDir = dir;
+  el.closest('div').querySelectorAll('.style-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  applyBannerBg(idx);
+}
+
+function applyBannerBg(idx){
+  const b = state.banners[idx];
+  const block = document.getElementById('pcanvas-'+idx)
+    ? document.getElementById('pcanvas-'+idx).parentElement
+    : document.getElementById('pBannerFixed')?.firstElementChild;
+
+  let bgStyle = '';
+  if(b.bgType==='transparent') bgStyle = 'transparent';
+  else if(b.bgType==='gradient') bgStyle = `linear-gradient(${b.bgGradDir||'to right'},${b.bgGrad1||'#d94f5c'},${b.bgGrad2||'#9b5de5'})`;
+  else bgStyle = b.bgColor || '#e8e0d5';
+
+  if(block) block.style.background = bgStyle;
+  drawCanvas(idx);
+}
+
 function setBannerBg(idx, val){
   state.banners[idx].bgColor = val;
   // 색상 피커 swatch 업데이트
@@ -1207,7 +1329,19 @@ function drawCanvas(idx){
   canvas.width=cw*dpr;canvas.height=ch*dpr;
   const ctx=canvas.getContext('2d');
   ctx.scale(dpr,dpr);
-  if(b.bgColor && b.bgColor !== 'transparent'){
+  // 배경 그리기 (단색/그라데이션/투명)
+  if(b.bgType === 'gradient'){
+    const grad = ctx.createLinearGradient(
+      b.bgGradDir==='to bottom' ? 0:0,
+      b.bgGradDir==='to bottom' ? 0:0,
+      b.bgGradDir==='to bottom' ? 0:b.bgGradDir==='135deg' ? cw:cw,
+      b.bgGradDir==='to bottom' ? ch:b.bgGradDir==='135deg' ? ch:0
+    );
+    grad.addColorStop(0, b.bgGrad1||'#d94f5c');
+    grad.addColorStop(1, b.bgGrad2||'#9b5de5');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,cw,ch);
+  } else if(b.bgColor && b.bgColor !== 'transparent'){
     ctx.fillStyle = b.bgColor;
     ctx.fillRect(0,0,cw,ch);
   }
@@ -1224,7 +1358,11 @@ function renderBannerBlocks(){
   const b0 = state.banners[0];
   const fixedDiv = document.createElement('div');
   fixedDiv.className = 'r-image-block';
-  const b0Bg = (b0 && b0.bgColor) ? b0.bgColor : '#e8e0d5';
+  let b0Bg = '#e8e0d5';
+  if(b0){
+    if(b0.bgType==='gradient') b0Bg=`linear-gradient(${b0.bgGradDir||'to right'},${b0.bgGrad1||'#d94f5c'},${b0.bgGrad2||'#9b5de5'})`;
+    else if(b0.bgColor) b0Bg=b0.bgColor;
+  }
   fixedDiv.style.background = b0Bg;
   if(b0 && b0.src && b0.imgObj){
     fixedDiv.innerHTML = `<canvas id="pcanvas-0" class="r-image-canvas" style="height:${b0.canvasH}px"></canvas>`;
@@ -1238,7 +1376,8 @@ function renderBannerBlocks(){
     if(i===0) return;
     const div=document.createElement('div');
     div.className='r-image-block-extra';
-    div.style.background = b.bgColor||'#e8e0d5';
+    if(b.bgType==='gradient') div.style.background=`linear-gradient(${b.bgGradDir||'to right'},${b.bgGrad1||'#d94f5c'},${b.bgGrad2||'#9b5de5'})`;
+    else div.style.background = b.bgColor||'#e8e0d5';
     if(b.src&&b.imgObj){
       div.innerHTML=`<canvas id="pcanvas-${i}" class="r-image-canvas" style="height:${b.canvasH}px"></canvas>`;
     } else {
@@ -1302,6 +1441,13 @@ function render(){
   const tc=colors.mainTitle;
   if(state.nickStyle==='filled'){
     titleEl.style.cssText=`font-size:${state.titleSize}px;font-weight:900;line-height:1.15;word-break:keep-all;background:${tc};color:white;display:inline-block;padding:${state.titlePadY}px ${state.titlePadX}px`;
+  } else if(state.nickStyle==='gradient'){
+    const g=`linear-gradient(${state.gradDir},${state.gradColor1},${state.gradColor2})`;
+    if(state.gradApply==='bg'){
+      titleEl.style.cssText=`font-size:${state.titleSize}px;font-weight:900;line-height:1.15;word-break:keep-all;background:${g};color:white;display:inline-block;padding:${state.titlePadY}px ${state.titlePadX}px`;
+    } else {
+      titleEl.style.cssText=`font-size:${state.titleSize}px;font-weight:900;line-height:1.15;word-break:keep-all;background:${g};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:inline-block;padding:${state.titlePadY}px ${state.titlePadX}px`;
+    }
   } else if(state.nickStyle==='outline'){
     const oc=state.outlineColor||'#1a1a1a';titleEl.style.cssText=`font-size:${state.titleSize}px;font-weight:900;line-height:1.1;word-break:keep-all;color:${tc};-webkit-text-stroke:2px ${oc};display:inline-block;background:transparent;paint-order:stroke fill`;
   } else {
