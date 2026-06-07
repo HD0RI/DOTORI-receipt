@@ -149,6 +149,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
 /* PREVIEW AREA */
 .preview-area{flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:32px 24px;background:var(--bg)}
+.zoom-controls{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:100}
+.zoom-btn{width:36px;height:36px;border-radius:50%;background:white;border:1px solid var(--border2);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.12);transition:all .15s;line-height:1}
+.zoom-btn:hover{background:var(--accent);color:white;border-color:var(--accent)}
+.zoom-label{text-align:center;font-size:10px;color:var(--muted);font-family:'Noto Sans KR',sans-serif}
 
 /* RECEIPT */
 .receipt-wrap{display:flex;flex-direction:column;align-items:center}
@@ -191,6 +195,9 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .banner-card{background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px}
 .banner-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .banner-card-num{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.order-btn{background:none;border:1px solid var(--border2);border-radius:5px;width:22px;height:22px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:all .15s;line-height:1;padding:0}
+.order-btn:hover{background:var(--accent);color:white;border-color:var(--accent)}
+.order-btn:disabled{opacity:.3;cursor:not-allowed}
 .img-ctrl-row{display:flex;align-items:center;gap:8px;margin-top:6px}
 .img-ctrl-row label{font-size:11px;color:var(--muted);white-space:nowrap;min-width:24px}
 .img-ctrl-row input[type=range]{flex:1}
@@ -199,7 +206,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .r-main-title{font-size:36px;font-weight:900;line-height:1.15;word-break:keep-all}
 .r-sub-title{font-size:13px;margin-top:2px}
 .r-tags{display:flex;flex-wrap:wrap;gap:4px;padding:8px 0}
-.r-tag{font-size:10px;padding:2px 8px;border-radius:20px;border:1px solid;font-weight:700;letter-spacing:.05em}
+.r-tag{font-size:10px;padding:2px 8px;border-radius:20px;border:1px solid;font-weight:700;letter-spacing:.05em;line-height:1.6;display:inline-flex;align-items:center;vertical-align:middle}
 .r-dashed{border-top:1px dashed var(--receipt-faint);position:relative}
 /* 실선 — 얇게 1px */
 .r-divider-solid .r-dashed,
@@ -265,6 +272,16 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 </style>
 </head>
 <body>
+
+<!-- 모바일 안내 -->
+<div id="mobileNotice" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;padding:24px">
+  <div style="background:white;border-radius:16px;padding:28px 24px;max-width:320px;text-align:center">
+    <div style="font-size:36px;margin-bottom:12px">🖥️</div>
+    <div style="font-size:17px;font-weight:700;margin-bottom:8px;color:#1a1a1a">PC에서 이용해주세요!</div>
+    <p style="font-size:13px;color:#6b7280;line-height:1.6;margin-bottom:20px">화송이 영수증은 PC 환경에서<br>최적화되어 있어요.<br>모바일에서는 일부 기능이<br>정상적으로 동작하지 않을 수 있어요.</p>
+    <button onclick="document.getElementById('mobileNotice').style.display='none'" style="width:100%;padding:10px;background:#d94f5c;color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">그래도 계속할게요</button>
+  </div>
+</div>
 
 <div class="topbar">
   <div class="topbar-title">🎟 화송이 영수증</div>
@@ -426,6 +443,68 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <p style="font-size:11px;color:var(--muted);margin-bottom:10px">이미지를 여러 장 추가할 수 있어요. 미리보기에서 드래그로 이동, 휠로 확대·축소해요.</p>
       <div id="bannerCardsEditor"></div>
       <button class="btn-add" onclick="addBannerSlot()">+ 이미지 추가</button>
+
+      <div class="section-head" style="margin-top:20px">저장 옵션</div>
+
+      <!-- 여백 -->
+      <div class="field">
+        <label class="field-label" style="margin-bottom:8px">여백</label>
+        <div style="margin-bottom:8px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:4px">상하</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="range" id="savePadY" min="0" max="200" value="0" step="8" style="flex:1" oninput="document.getElementById('savePadYVal').textContent=this.value+'px';applyPreviewBg()">
+            <span id="savePadYVal" style="font-size:11px;color:var(--muted);min-width:32px;text-align:right;flex-shrink:0">0px</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:4px">좌우</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="range" id="savePadX" min="0" max="200" value="0" step="8" style="flex:1" oninput="document.getElementById('savePadXVal').textContent=this.value+'px';applyPreviewBg()">
+            <span id="savePadXVal" style="font-size:11px;color:var(--muted);min-width:32px;text-align:right;flex-shrink:0">0px</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 배경 타입 -->
+      <div class="field">
+        <label class="field-label">저장 배경</label>
+        <div class="style-row" style="margin-bottom:8px">
+          <button class="style-btn active" id="savebg-transparent" onclick="setSaveBg('transparent',this)">투명</button>
+          <button class="style-btn" id="savebg-color" onclick="setSaveBg('color',this)">색상</button>
+          <button class="style-btn" id="savebg-blur" onclick="setSaveBg('blur',this)">흐림 이미지</button>
+        </div>
+
+        <!-- 색상 선택 -->
+        <div id="saveBgColorRow" style="display:none;align-items:center;gap:8px;margin-bottom:8px">
+          <div class="color-dot" title="배경색">
+            <div class="color-dot-swatch" id="swatch-saveBgColor" style="background:#f2f3f5"></div>
+            <input type="color" id="saveBgColorInput" value="#f2f3f5" oninput="document.getElementById('swatch-saveBgColor').style.background=this.value;applyPreviewBg()">
+          </div>
+          <span style="font-size:12px;color:var(--muted)">배경 색상 선택</span>
+        </div>
+
+        <!-- 흐림 이미지 업로드 -->
+        <div id="saveBgBlurRow" style="display:none">
+          <div class="upload-zone" id="bgBlurZone" style="margin-bottom:8px">
+            <input type="file" accept="image/*" onchange="loadBgBlurImg(event)">
+            <div class="upload-hint" id="bgBlurHint"><em>🌄</em>배경 이미지 업로드</div>
+            <img id="bgBlurPreview" style="display:none">
+            <button class="btn-clear-img" onclick="clearBgBlurImg(event)">✕</button>
+          </div>
+          <div class="img-ctrl-row">
+            <label>흐림</label>
+            <input type="range" id="bgBlurAmount" min="0" max="40" value="10" step="1" oninput="document.getElementById('bgBlurVal').textContent=this.value+'px';applyPreviewBg()">
+            <span id="bgBlurVal" style="font-size:11px;color:var(--muted);min-width:36px;text-align:right">10px</span>
+          </div>
+          <div class="img-ctrl-row" style="margin-top:6px">
+            <label>어둠</label>
+            <input type="range" id="bgDimAmount" min="0" max="80" value="20" step="5" oninput="document.getElementById('bgDimVal').textContent=this.value+'%';applyPreviewBg()">
+            <span id="bgDimVal" style="font-size:11px;color:var(--muted);min-width:36px;text-align:right">20%</span>
+          </div>
+        </div>
+      </div>
+
+
     </div>
 
     <!-- DESIGN TAB -->
@@ -588,7 +667,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 </div><!-- sidebar -->
 
 <!-- PREVIEW -->
-<div class="preview-area">
+<div class="preview-area" id="previewArea">
   <div class="receipt-wrap" id="receiptWrap">
     <div class="tear tear-top" id="tearTop">
       <svg viewBox="0 0 380 14" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" id="tearTopSvg">
@@ -615,7 +694,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
         <div class="r-note r-dashed" id="pNote"></div>
         <div class="r-barcode">
           <svg id="pBarcode" viewBox="0 0 300 50" preserveAspectRatio="none"></svg>
-          <div class="r-barcode-num" id="pBarcodeNum">780541239876</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
+            <div class="r-barcode-num" id="pBarcodeNum">780541239876</div>
+            <div class="r-barcode-num" id="pCopyright" style="letter-spacing:.05em">ⓒS0NG_CMS</div>
+          </div>
         </div>
       </div><!-- receipt-inner -->
     </div><!-- receipt -->
@@ -633,6 +715,14 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 </div>
 
 </div><!-- app-body -->
+
+<!-- ZOOM CONTROLS -->
+<div class="zoom-controls">
+  <button class="zoom-btn" onclick="changeZoom(0.1)" title="확대">＋</button>
+  <div class="zoom-label" id="zoomLabel">100%</div>
+  <button class="zoom-btn" onclick="changeZoom(-0.1)" title="축소">－</button>
+  <button class="zoom-btn" onclick="resetZoom()" title="초기화" style="font-size:13px">↺</button>
+</div>
 
 <!-- WELCOME MODAL -->
 <div class="modal-overlay" id="welcomeModal">
@@ -655,6 +745,11 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <div class="modal-row"><span class="modal-icon">🖼️</span><span>단, <b>업로드한 이미지는 저장되지 않아요.</b> 매번 다시 업로드해야 해요</span></div>
     </div>
 
+    <div class="modal-warn" style="background:#fef3f2;border-color:#fecaca;color:#991b1b;margin-bottom:12px">
+      🖥️ <strong>PC 전용 서비스예요!</strong>
+      화송이 영수증은 PC 환경에 최적화되어 있어요.<br>
+      모바일·태블릿에서는 일부 기능이 정상 동작하지 않을 수 있으니 <b>PC에서 이용</b>해주세요!
+    </div>
     <div class="modal-warn">
       ⚠️ <strong>캐시 삭제 시 주의!</strong>
       저장 데이터는 브라우저의 <b>로컬스토리지</b>에 보관돼요.<br>
@@ -685,7 +780,7 @@ let state = {
   nickStyle: 'filled',
   outlineColor: '#1a1a1a',
   font: 'gothic',
-  titleEnFont: 'Noto Sans KR',
+  titleEnFont: 'Playfair Display',
   titleKoFont: 'Noto Sans KR',
   bodyEnFont: 'Noto Sans KR',
   bodyKoFont: 'Noto Sans KR',
@@ -918,7 +1013,7 @@ function renderFreeSections(){
 function addFreeSection(){
   const ac=colors.mainTitle||'#d94f5c';
   state.freeSections.push({label:'SECTION',labelColor:ac,contentColor:'#1a1a1a',content:''});
-  renderFreeSections();render();
+  renderFreeSections();render();autoScrollToBottom();
 }
 
 // ─── MISC SECTIONS ───
@@ -958,7 +1053,7 @@ function renderMiscEditor(){
 function addMiscSection(){
   const ac=colors.mainTitle||'#d94f5c';
   state.miscSections.push({title:'소제목',titleColor:ac,items:[''],itemColor:'#1a1a1a'});
-  renderMiscEditor();render();
+  renderMiscEditor();render();autoScrollToBottom();
 }
 
 // ─── MULTI-BANNER IMAGE SYSTEM ───
@@ -971,8 +1066,23 @@ function addBannerSlot(){
   renderBannerEditor();
 }
 
+function moveBanner(idx, dir){
+  const newIdx = idx + dir;
+  if(newIdx < 0 || newIdx >= state.banners.length) return;
+  // swap
+  const tmp = state.banners[idx];
+  state.banners[idx] = state.banners[newIdx];
+  state.banners[newIdx] = tmp;
+  renderBannerEditor();
+  renderBannerBlocks();
+}
+
 function removeBanner(idx){
   state.banners.splice(idx,1);
+  // 항상 슬롯 0 유지
+  if(state.banners.length === 0){
+    state.banners.push({src:null,imgObj:null,x:0,y:0,scale:1,canvasH:180,bgColor:'#e8e0d5'});
+  }
   renderBannerEditor();
   renderBannerBlocks();
 }
@@ -987,7 +1097,11 @@ function renderBannerEditor(){
     card.innerHTML=`
       <div class="banner-card-header">
         <span class="banner-card-num">이미지 ${i+1}</span>
-        <button class="btn-x" onclick="removeBanner(${i})">✕</button>
+        <div style="display:flex;align-items:center;gap:4px">
+          <button class="order-btn" onclick="moveBanner(${i},-1)" ${i===0?'disabled':''} title="위로">▲</button>
+          <button class="order-btn" onclick="moveBanner(${i},1)" ${i===state.banners.length-1?'disabled':''} title="아래로">▼</button>
+          <button class="btn-x" onclick="removeBanner(${i})">✕</button>
+        </div>
       </div>
       <div class="upload-zone ${hasImg?'has-img':''}" id="bzone-${i}" style="margin-bottom:${hasImg?'8px':'0'}">
         <input type="file" accept="image/*" onchange="loadBannerImg(event,${i})">
@@ -1277,6 +1391,8 @@ function renderBarcode(num){
   const svg=document.getElementById('pBarcode');
   document.getElementById('pBarcodeNum').textContent=num;
   document.getElementById('pBarcodeNum').style.color=colors.barcodeMain;
+  const cr=document.getElementById('pCopyright');
+  if(cr) cr.style.color=colors.barcodeMain;
   const seed=num.replace(/\D/g,'').padEnd(12,'0').split('').map(Number);
   const bars=[];const N=80;
   for(let i=0;i<N;i++){
@@ -1546,6 +1662,135 @@ function showToast(msg){
   t._timer = setTimeout(()=>{ t.style.opacity='0'; }, 2000);
 }
 
+// ─── ZOOM ───
+let currentZoom = 1;
+function changeZoom(delta){
+  currentZoom = Math.min(2, Math.max(0.4, currentZoom + delta));
+  applyZoom();
+}
+function resetZoom(){
+  currentZoom = 1;
+  applyZoom();
+}
+function applyZoom(){
+  const wrap = document.getElementById('receiptWrap');
+  wrap.style.transform = `scale(${currentZoom})`;
+  wrap.style.transformOrigin = 'top center';
+  document.getElementById('zoomLabel').textContent = Math.round(currentZoom*100)+'%';
+  autoScrollToBottom();
+}
+
+// ─── AUTO SCROLL ───
+function autoScrollToBottom(){
+  const area = document.getElementById('previewArea');
+  if(!area) return;
+  // 내용 추가 시 부드럽게 맨 아래로
+  setTimeout(()=>{
+    area.scrollTo({top: area.scrollHeight, behavior:'smooth'});
+  }, 100);
+}
+
+// render 후 자동 스크롤 (새 섹션 추가 시)
+const _origRender = window.render;
+
+// ─── MOBILE DETECT ───
+function checkMobile(){
+  if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768){
+    document.getElementById('mobileNotice').style.display='flex';
+  }
+}
+
+// ─── SAVE OPTIONS ───
+let saveBgType = 'transparent'; // transparent | color | blur
+let bgBlurImgSrc = null;
+
+function setSaveBg(type, el){
+  setTimeout(applyPreviewBg, 50);
+  saveBgType = type;
+  document.querySelectorAll('[id^="savebg-"]').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('saveBgColorRow').style.display = type==='color' ? 'flex' : 'none';
+  document.getElementById('saveBgBlurRow').style.display  = type==='blur'  ? 'block': 'none';
+}
+
+// ─── PREVIEW BG (미리보기 영역 배경 적용) ───
+function updateSavePreview(){
+  applyPreviewBg();
+}
+
+function applyPreviewBg(){
+  const area = document.getElementById('previewArea');
+  const wrap = document.getElementById('receiptWrap');
+  if(!area || !wrap) return;
+
+  // 여백을 padding으로 미리보기에 반영
+  const padX = parseInt(document.getElementById('savePadX').value)||0;
+  const padY = parseInt(document.getElementById('savePadY').value)||0;
+  area.style.padding = `${Math.max(32,padY+32)}px ${Math.max(24,padX+24)}px`;
+
+  // 배경 적용
+  if(saveBgType === 'transparent'){
+    area.style.background = 'var(--bg)';
+    area.style.backgroundImage = '';
+  } else if(saveBgType === 'color'){
+    const col = document.getElementById('saveBgColorInput').value;
+    area.style.background = col;
+    area.style.backgroundImage = '';
+  } else if(saveBgType === 'blur' && bgBlurImgSrc){
+    const blur = document.getElementById('bgBlurAmount').value;
+    const dim  = parseInt(document.getElementById('bgDimAmount').value)/100;
+    area.style.backgroundImage = `url('${bgBlurImgSrc}')`;
+    area.style.backgroundSize = 'cover';
+    area.style.backgroundPosition = 'center';
+    area.style.backgroundColor = '';
+    let overlay = document.getElementById('previewBgOverlay');
+    if(!overlay){
+      overlay = document.createElement('div');
+      overlay.id = 'previewBgOverlay';
+      overlay.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:0';
+      area.style.position = 'relative';
+      area.insertBefore(overlay, area.firstChild);
+    }
+    overlay.style.backdropFilter = `blur(${blur}px)`;
+    overlay.style.background = `rgba(0,0,0,${dim})`;
+    wrap.style.position = 'relative';
+    wrap.style.zIndex = '1';
+  }
+
+  if(saveBgType !== 'blur'){
+    const overlay = document.getElementById('previewBgOverlay');
+    if(overlay) overlay.remove();
+    if(saveBgType !== 'color') area.style.backgroundImage = '';
+  }
+}
+
+function loadBgBlurImg(e){
+  const file = e.target.files[0]; if(!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    bgBlurImgSrc = ev.target.result;
+    setTimeout(applyPreviewBg, 100);
+    const zone = document.getElementById('bgBlurZone');
+    zone.classList.add('has-img');
+    document.getElementById('bgBlurHint').style.display = 'none';
+    document.getElementById('bgBlurPreview').src = ev.target.result;
+    document.getElementById('bgBlurPreview').style.display = 'block';
+  };
+  r.readAsDataURL(file);
+}
+
+function clearBgBlurImg(e){
+  e.stopPropagation(); e.preventDefault();
+  bgBlurImgSrc = null;
+  const zone = document.getElementById('bgBlurZone');
+  zone.classList.remove('has-img');
+  document.getElementById('bgBlurHint').style.display = 'block';
+  document.getElementById('bgBlurPreview').style.display = 'none';
+  document.getElementById('bgBlurPreview').src = '';
+  zone.querySelector('input[type=file]').value = '';
+  applyPreviewBg();
+}
+
 function resetAll(){if(!confirm('초기화할까요?'))return;location.reload();}
 
 function resolveCssVar(varStr){
@@ -1605,13 +1850,53 @@ function downloadPNG(){
       useCORS:true,
       allowTaint:true,
       logging:false,
-    }).then(c=>{
+    }).then(async ticketCanvas=>{
       area.style.background=prevBg;
       restoreSvgVars(savedVars);
       state.banners.forEach((b,i)=>{ if(b.imgObj) drawCanvas(i); });
+
+      // 여백 + 배경 합성
+      const padX = parseInt(document.getElementById('savePadX').value)||0;
+      const padY = parseInt(document.getElementById('savePadY').value)||0;
+      const tw = ticketCanvas.width;
+      const th = ticketCanvas.height;
+      const fw = tw + padX*2*SCALE;
+      const fh = th + padY*2*SCALE;
+
+      const final = document.createElement('canvas');
+      final.width = fw; final.height = fh;
+      const ctx = final.getContext('2d');
+
+      if(saveBgType==='color'){
+        ctx.fillStyle = document.getElementById('saveBgColorInput').value;
+        ctx.fillRect(0,0,fw,fh);
+      } else if(saveBgType==='blur' && bgBlurImgSrc){
+        // 배경 이미지 그리기
+        await new Promise(res=>{
+          const bg = new Image();
+          bg.onload = ()=>{
+            // 꽉 채우기
+            const scale = Math.max(fw/bg.width, fh/bg.height);
+            const bw = bg.width*scale, bh = bg.height*scale;
+            const bx = (fw-bw)/2, by = (fh-bh)/2;
+            ctx.filter = `blur(${document.getElementById('bgBlurAmount').value}px)`;
+            ctx.drawImage(bg, bx-20, by-20, bw+40, bh+40);
+            ctx.filter = 'none';
+            // 어둠 오버레이
+            const dim = parseInt(document.getElementById('bgDimAmount').value)/100;
+            ctx.fillStyle = `rgba(0,0,0,${dim})`;
+            ctx.fillRect(0,0,fw,fh);
+            res();
+          };
+          bg.src = bgBlurImgSrc;
+        });
+      }
+      // 티켓 합성
+      ctx.drawImage(ticketCanvas, padX*SCALE, padY*SCALE);
+
       const a=document.createElement('a');
       a.download='화송이영수증.png';
-      a.href=c.toDataURL('image/png');
+      a.href=final.toDataURL('image/png');
       a.click();
     });
   };
@@ -1640,6 +1925,7 @@ renderMiscEditor();
 renderBannerEditor();
 renderBannerBlocks();
 render();
+checkMobile();
 </script>
 </body>
 </html>
