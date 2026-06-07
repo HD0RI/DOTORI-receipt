@@ -701,7 +701,7 @@ let state = {
   miscSections: [
     {title:'소지 목록', titleColor:'#d94f5c', items:['물병','카메라'], itemColor:'#1a1a1a'},
   ],
-  banners: [{src:null,imgObj:null,x:0,y:0,scale:1,canvasH:180}],  // index 0 is fixed top banner
+  banners: [{src:null,imgObj:null,x:0,y:0,scale:1,canvasH:180,bgColor:'#e8e0d5'}],  // index 0 is fixed top banner
 };
 
 // ─── FIELD COLOR SETTER ───
@@ -967,7 +967,7 @@ function addMiscSection(){
 let dragState = {}; // {idx: {active,startX,startY,ox,oy}}
 
 function addBannerSlot(){
-  state.banners.push({src:null,imgObj:null,x:0,y:0,scale:1,canvasH:180});
+  state.banners.push({src:null,imgObj:null,x:0,y:0,scale:1,canvasH:180,bgColor:'#e8e0d5'});
   renderBannerEditor();
 }
 
@@ -994,6 +994,18 @@ function renderBannerEditor(){
         <div class="upload-hint" id="bhint-${i}" style="display:${hasImg?'none':'block'}"><em>🖼️</em>클릭해서 업로드</div>
         <img id="bpreview-${i}" src="${hasImg?b.src:''}" style="display:${hasImg?'block':'none'}">
         <button class="btn-clear-img" onclick="clearBannerImg(event,${i})" style="display:${hasImg?'flex':'none'}">✕</button>
+      </div>
+      <div class="img-ctrl-row" style="margin-top:6px"><label>배경</label>
+        <div style="display:flex;align-items:center;gap:6px;flex:1">
+          <div class="color-dot" style="width:26px;height:26px;border-radius:6px;flex-shrink:0">
+            <div class="color-dot-swatch" id="bbgswatch-${i}" style="background:${b.bgColor||'#e8e0d5'};border-radius:5px"></div>
+            <input type="color" value="${b.bgColor||'#e8e0d5'}" oninput="setBannerBg(${i},this.value)">
+          </div>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);cursor:pointer">
+            <input type="checkbox" id="bgtrans-${i}" ${b.bgColor==='transparent'?'checked':''} onchange="setBannerBg(${i},this.checked?'transparent':'#e8e0d5')">
+            투명
+          </label>
+        </div>
       </div>
       ${hasImg?`
       <div class="img-ctrl-row"><label>크기</label>
@@ -1046,6 +1058,19 @@ function updateBanner(idx,key,val){
   drawCanvas(idx);
 }
 
+function setBannerBg(idx, val){
+  state.banners[idx].bgColor = val;
+  // 색상 피커 swatch 업데이트
+  const sw = document.getElementById('bbgswatch-'+idx);
+  if(sw) sw.style.background = val==='transparent'?'repeating-linear-gradient(45deg,#ccc 0,#ccc 2px,white 0,white 50%) 0/6px 6px':val;
+  // canvas/block 배경색 업데이트
+  const block = document.getElementById('pcanvas-'+idx)
+    ? document.getElementById('pcanvas-'+idx).parentElement
+    : null;
+  if(block) block.style.background = val;
+  drawCanvas(idx);
+}
+
 function resetBanner(idx){
   const b=state.banners[idx];
   if(!b.imgObj)return;
@@ -1068,7 +1093,10 @@ function drawCanvas(idx){
   canvas.width=cw*dpr;canvas.height=ch*dpr;
   const ctx=canvas.getContext('2d');
   ctx.scale(dpr,dpr);
-  ctx.clearRect(0,0,cw,ch);
+  if(b.bgColor && b.bgColor !== 'transparent'){
+    ctx.fillStyle = b.bgColor;
+    ctx.fillRect(0,0,cw,ch);
+  }
   ctx.drawImage(b.imgObj,b.x,b.y,b.imgObj.width*b.scale,b.imgObj.height*b.scale);
 }
 
@@ -1082,10 +1110,11 @@ function renderBannerBlocks(){
   const b0 = state.banners[0];
   const fixedDiv = document.createElement('div');
   fixedDiv.className = 'r-image-block';
+  const b0Bg = (b0 && b0.bgColor) ? b0.bgColor : '#e8e0d5';
+  fixedDiv.style.background = b0Bg;
   if(b0 && b0.src && b0.imgObj){
     fixedDiv.innerHTML = `<canvas id="pcanvas-0" class="r-image-canvas" style="height:${b0.canvasH}px"></canvas>`;
   } else {
-    // 항상 플레이스홀더 표시 (고정 높이)
     fixedDiv.innerHTML = `<div class="r-image-placeholder">[ IMAGE ]</div>`;
   }
   fixed.appendChild(fixedDiv);
@@ -1095,6 +1124,7 @@ function renderBannerBlocks(){
     if(i===0) return;
     const div=document.createElement('div');
     div.className='r-image-block-extra';
+    div.style.background = b.bgColor||'#e8e0d5';
     if(b.src&&b.imgObj){
       div.innerHTML=`<canvas id="pcanvas-${i}" class="r-image-canvas" style="height:${b.canvasH}px"></canvas>`;
     } else {
