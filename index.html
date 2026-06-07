@@ -581,8 +581,13 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       </div><!-- receipt-inner -->
     </div><!-- receipt -->
     <div class="tear tear-bottom" id="tearBottom">
-      <svg viewBox="0 0 380 14" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" id="tearBottomSvg">
-        <polygon points="0,0 7.6,14 15.2,0 22.8,14 30.4,0 38.0,14 45.6,0 53.2,14 60.8,0 68.4,14 76.0,0 83.6,14 91.2,0 98.8,14 106.4,0 114.0,14 121.6,0 129.2,14 136.8,0 144.4,14 152.0,0 159.6,14 167.2,0 174.8,14 182.4,0 190.0,14 197.6,0 205.2,14 212.8,0 220.4,14 228.0,0 235.6,14 243.2,0 250.8,14 258.4,0 266.0,14 273.6,0 281.2,14 288.8,0 296.4,14 304.0,0 311.6,14 319.2,0 326.8,14 334.4,0 342.0,14 349.6,0 357.2,14 364.8,0 372.4,14 380.0,0 0,0" fill="var(--receipt-bg)" id="tearBotPoly"/>
+      <svg viewBox="0 0 380 14" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" id="tearBottomSvg" style="display:block;width:100%;height:14px">
+        <defs>
+          <clipPath id="botClip">
+            <polygon points="0,0 0.0,0 7.6,14 15.2,0 15.2,0 22.8,14 30.4,0 30.4,0 38.0,14 45.6,0 45.6,0 53.2,14 60.8,0 60.8,0 68.4,14 76.0,0 76.0,0 83.6,14 91.2,0 91.2,0 98.8,14 106.4,0 106.4,0 114.0,14 121.6,0 121.6,0 129.2,14 136.8,0 136.8,0 144.4,14 152.0,0 152.0,0 159.6,14 167.2,0 167.2,0 174.8,14 182.4,0 182.4,0 190.0,14 197.6,0 197.6,0 205.2,14 212.8,0 212.8,0 220.4,14 228.0,0 228.0,0 235.6,14 243.2,0 243.2,0 250.8,14 258.4,0 258.4,0 266.0,14 273.6,0 273.6,0 281.2,14 288.8,0 288.8,0 296.4,14 304.0,0 304.0,0 311.6,14 319.2,0 319.2,0 326.8,14 334.4,0 334.4,0 342.0,14 349.6,0 349.6,0 357.2,14 364.8,0 364.8,0 372.4,14 380.0,0 380,0 0,0"/>
+          </clipPath>
+        </defs>
+        <rect width="380" height="14" fill="var(--receipt-bg)" id="tearBotRect" clip-path="url(#botClip)"/>
       </svg>
     </div>
   </div>
@@ -1234,9 +1239,9 @@ function setBgColor(val, source){
   document.getElementById('bgCustomPreview').style.background = val;
   // SVG tear fill 업데이트
   const topPoly = document.getElementById('tearTopPoly');
-  const botPoly = document.getElementById('tearBotPoly');
+  const botRect = document.getElementById('tearBotRect');
   if(topPoly) topPoly.setAttribute('fill', val);
-  if(botPoly) botPoly.setAttribute('fill', val);
+  if(botRect) botRect.setAttribute('fill', val);
   // active 표시
   document.querySelectorAll('[data-bg]').forEach(s=>s.classList.remove('active'));
   if(source && source!=='custom' && source.classList){
@@ -1369,7 +1374,7 @@ function resolveCssVar(varStr){
 
 function fixSvgVars(){
   // SVG 안의 fill="var(--xxx)"를 실제 색상으로 교체
-  const svgEls = document.querySelectorAll('#tearTopPoly,#tearBotPoly');
+  const svgEls = document.querySelectorAll('#tearTopPoly,#tearBotRect');
   const saved = [];
   svgEls.forEach(el=>{
     const orig = el.getAttribute('fill');
