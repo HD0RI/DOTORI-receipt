@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>화송이 영수증</title>
-<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@400;700;900&family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@400;500&family=Nanum+Gothic+Coding&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@400;700;900&family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@400;500&family=Nanum+Gothic+Coding&family=Do+Hyeon&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
@@ -561,24 +561,15 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
       <div class="section-head">타이틀 폰트</div>
       <p style="font-size:11px;color:var(--muted);margin-bottom:8px">큰 제목에만 적용돼요</p>
-      <div style="display:flex;gap:8px;margin-bottom:10px">
-        <div style="flex:1">
-          <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px">영문</div>
-          <div style="display:flex;flex-direction:column;gap:4px" id="tef-grid">
-            <button class="font-btn active" id="tef-sans" onclick="setTitleEnFont('Noto Sans KR',this)" style="font-family:'Noto Sans KR'">Sans</button>
-            <button class="font-btn" id="tef-playfair" onclick="setTitleEnFont('Playfair Display',this)" style="font-family:'Playfair Display'">Playfair</button>
-            <button class="font-btn" id="tef-mono" onclick="setTitleEnFont('Courier Prime',this)" style="font-family:'Courier Prime',monospace">Mono</button>
-            <button class="font-btn" id="tef-dmmono" onclick="setTitleEnFont('DM Mono',this)" style="font-family:'DM Mono',monospace">DM Mono</button>
-          </div>
-        </div>
-        <div style="flex:1">
-          <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px">한글</div>
-          <div style="display:flex;flex-direction:column;gap:4px" id="tkf-grid">
-            <button class="font-btn active" id="tkf-gothic" onclick="setTitleKoFont('Noto Sans KR',this)" style="font-family:'Noto Sans KR'">고딕</button>
-            <button class="font-btn" id="tkf-serif" onclick="setTitleKoFont('Noto Serif KR',this)" style="font-family:'Noto Serif KR'">명조</button>
-          </div>
-        </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px" id="title-font-grid">
+        <button class="font-btn active" id="tfont-gothic" onclick="setTitleFontCombo('Noto Sans KR','Noto Sans KR',this)" style="font-family:'Noto Sans KR'">고딕</button>
+        <button class="font-btn" id="tfont-serif" onclick="setTitleFontCombo('Noto Serif KR','Noto Serif KR',this)" style="font-family:'Noto Serif KR'">명조</button>
+        <button class="font-btn" id="tfont-playfair" onclick="setTitleFontCombo('Playfair Display','Noto Sans KR',this)" style="font-family:'Playfair Display'">Playfair (영문)</button>
+        <button class="font-btn" id="tfont-mono" onclick="setTitleFontCombo('Courier Prime','Noto Sans KR',this)" style="font-family:'Courier Prime',monospace">Mono (영문)</button>
+        <button class="font-btn" id="tfont-dmmono" onclick="setTitleFontCombo('DM Mono','Noto Sans KR',this)" style="font-family:'DM Mono',monospace">DM Mono (영문)</button>
+        <button class="font-btn" id="tfont-dohyeon" onclick="setTitleFontCombo('Do Hyeon','Do Hyeon',this)" style="font-family:'Do Hyeon'">Do Hyeon</button>
       </div>
+      <p style="font-size:10px;color:var(--muted);margin-bottom:14px">※ 고딕·명조·Do Hyeon은 한글도 적용돼요</p>
 
       <div class="section-head">본문 폰트</div>
       <p style="font-size:11px;color:var(--muted);margin-bottom:8px">정보항목·자유섹션·기타사항 등에 적용돼요</p>
@@ -892,26 +883,55 @@ function setOutlineColor(val){
 }
 
 // ─── FONT ───
+// 영문 전용 폰트 목록 (한글 미지원 → 한글은 ko폰트로 자연스럽게 폴백)
+const EN_ONLY_FONTS = ['Playfair Display','Courier Prime','DM Mono'];
+
 function applyFonts(){
   const ten = state.titleEnFont || 'Noto Sans KR';
   const tko = state.titleKoFont || 'Noto Sans KR';
   const ben = state.bodyEnFont  || 'Noto Sans KR';
-  // 한글 지원 폰트는 단독으로, 영문 전용은 Noto Sans KR 폴백
-  const koSupported = ['Noto Sans KR','Noto Serif KR','Nanum Gothic Coding'];
+
+  // 동적 @font-face로 영문/한글 unicode-range 강제 분리
+  let dynStyle = document.getElementById('dynamicFontFace');
+  if(!dynStyle){
+    dynStyle = document.createElement('style');
+    dynStyle.id = 'dynamicFontFace';
+    document.head.appendChild(dynStyle);
+  }
+
+  // 영문 전용 폰트일 때만 한글 범위 차단 @font-face 생성
+  // 한글 범위를 해당 폰트에서 제외시켜 ko폰트로 폴백하게 함
+  const KO_RANGE = 'U+AC00-D7A3,U+1100-11FF,U+3130-318F,U+A960-A97F,U+D7B0-D7FF';
+  const EN_RANGE = 'U+0020-007F,U+00A0-00FF';
+
+  let faceRules = '';
+  if(EN_ONLY_FONTS.includes(ten)){
+    // 타이틀: 영문폰트를 영문범위에만, ko폰트를 한글범위에만
+    faceRules += `
+      @font-face { font-family:'TitleEN'; src:local('${ten}'); unicode-range:${EN_RANGE}; font-weight:100 900; }
+      @font-face { font-family:'TitleKO'; src:local('${tko}'); unicode-range:${KO_RANGE}; font-weight:100 900; }
+    `;
+  }
+  dynStyle.textContent = faceRules;
+
+  // 타이틀 font-family
+  const titleEl = document.getElementById('pMainTitle');
+  if(titleEl){
+    const titleFF = EN_ONLY_FONTS.includes(ten)
+      ? `'TitleEN','TitleKO','${ten}','${tko}',sans-serif`
+      : `'${ten}',sans-serif`;  // Noto 계열은 그냥 단독 적용
+    titleEl.style.fontFamily = titleFF;
+  }
+
+  // 본문 font-family
+  const koSupported = ['Noto Sans KR','Noto Serif KR','Nanum Gothic Coding','Do Hyeon'];
   const bodyFF = koSupported.includes(ben)
     ? `'${ben}',sans-serif`
     : `'${ben}','Noto Sans KR',sans-serif`;
 
-  // 타이틀
-  const titleEl = document.getElementById('pMainTitle');
-  if(titleEl) titleEl.style.fontFamily = `'${ten}','${tko}',sans-serif`;
-
-  // 본문: receipt-inner 안 모든 요소 직접 순회해서 style 속성으로 강제 주입
   const inner = document.querySelector('.receipt-inner');
   if(!inner) return;
-  // inner 자체
   inner.style.setProperty('font-family', bodyFF, 'important');
-  // 모든 자식
   inner.querySelectorAll('*').forEach(el => {
     if(el === titleEl || (titleEl && titleEl.contains(el))) return;
     el.style.setProperty('font-family', bodyFF, 'important');
@@ -1168,13 +1188,13 @@ function renderBannerEditor(){
       </div>
       <div style="margin-top:8px">
         <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px">배경 스타일</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:6px">
-          <button class="style-btn ${b.bgType==='color'||!b.bgType?'active':''}" onclick="setBannerBgType(${i},'color',this)">단색</button>
-          <button class="style-btn ${b.bgType==='gradient'?'active':''}" onclick="setBannerBgType(${i},'gradient',this)">그라데이션</button>
-          <button class="style-btn ${b.bgType==='transparent'?'active':''}" onclick="setBannerBgType(${i},'transparent',this)">투명</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:6px" id="bbgtype-btns-${i}">
+          <button class="style-btn" id="bbgbtn-color-${i}" onclick="setBannerBgType(${i},'color',this)">단색</button>
+          <button class="style-btn" id="bbgbtn-gradient-${i}" onclick="setBannerBgType(${i},'gradient',this)">그라데이션</button>
+          <button class="style-btn" id="bbgbtn-transparent-${i}" onclick="setBannerBgType(${i},'transparent',this)">투명</button>
         </div>
         <!-- 단색 -->
-        <div id="bbg-color-${i}" style="display:${(!b.bgType||b.bgType==='color')?'flex':'none'};align-items:center;gap:6px">
+        <div id="bbg-color-${i}" style="display:none;align-items:center;gap:6px">
           <div class="color-dot" style="width:26px;height:26px;border-radius:6px;flex-shrink:0">
             <div class="color-dot-swatch" id="bbgswatch-${i}" style="background:${b.bgColor||'#e8e0d5'};border-radius:5px"></div>
             <input type="color" value="${b.bgColor||'#e8e0d5'}" oninput="setBannerBg(${i},this.value)">
@@ -1182,7 +1202,7 @@ function renderBannerEditor(){
           <span style="font-size:11px;color:var(--muted)">배경색</span>
         </div>
         <!-- 그라데이션 -->
-        <div id="bbg-gradient-${i}" style="display:${b.bgType==='gradient'?'flex':'none'};flex-direction:column;gap:5px">
+        <div id="bbg-gradient-${i}" style="display:none;flex-direction:column;gap:5px">
           <div style="display:flex;align-items:center;gap:6px">
             <span style="font-size:11px;color:var(--muted);white-space:nowrap">색1</span>
             <div class="color-dot" style="width:24px;height:24px;border-radius:6px;flex-shrink:0">
@@ -1215,6 +1235,21 @@ function renderBannerEditor(){
       `:''}`;
     cont.appendChild(card);
   });
+  // bgType 버튼 active 상태 및 패널 초기화
+  state.banners.forEach((b,i) => initBannerBgUI(i));
+}
+
+function initBannerBgUI(i){
+  const b = state.banners[i];
+  const t = b.bgType || 'color';
+  ['color','gradient','transparent'].forEach(type => {
+    const btn = document.getElementById(`bbgbtn-${type}-${i}`);
+    if(btn) btn.classList.toggle('active', type === t);
+  });
+  const colorRow = document.getElementById('bbg-color-'+i);
+  const gradRow  = document.getElementById('bbg-gradient-'+i);
+  if(colorRow) colorRow.style.display = t==='color' ? 'flex' : 'none';
+  if(gradRow)  gradRow.style.display  = t==='gradient' ? 'flex' : 'none';
 }
 
 function loadBannerImg(e,idx){
@@ -1256,13 +1291,8 @@ function updateBanner(idx,key,val){
 function setBannerBgType(idx, type, el){
   state.banners[idx].bgType = type;
   if(type==='transparent') state.banners[idx].bgColor = 'transparent';
-  // UI 토글
-  const colorRow = document.getElementById('bbg-color-'+idx);
-  const gradRow  = document.getElementById('bbg-gradient-'+idx);
-  if(colorRow) colorRow.style.display = type==='color' ? 'flex' : 'none';
-  if(gradRow)  gradRow.style.display  = type==='gradient' ? 'flex' : 'none';
-  el.closest('div').querySelectorAll('.style-btn').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
+  else if(type==='color' && state.banners[idx].bgColor==='transparent') state.banners[idx].bgColor = '#e8e0d5';
+  initBannerBgUI(idx);
   applyBannerBg(idx);
 }
 
@@ -1453,6 +1483,13 @@ function render(){
   } else {
     titleEl.style.cssText=`font-size:${state.titleSize}px;font-weight:900;line-height:1.1;word-break:keep-all;color:${tc}`;
   }
+  // cssText 교체 후 폰트 재적용 (applyFonts의 타이틀 로직 재실행)
+  const _ten = state.titleEnFont||'Noto Sans KR';
+  const _tko = state.titleKoFont||'Noto Sans KR';
+  const _enOnly = ['Playfair Display','Courier Prime','DM Mono'];
+  titleEl.style.fontFamily = _enOnly.includes(_ten)
+    ? `'TitleEN','TitleKO','${_ten}','${_tko}',sans-serif`
+    : `'${_ten}',sans-serif`;
   titleEl.textContent=titleText;
 
   // subtitle
