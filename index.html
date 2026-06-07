@@ -4,9 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>화송이 영수증</title>
-<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@400;700;900&family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@400;500&family=Nanum+Gothic+Coding&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+/* 한글/영문 분리 font-face */
+@font-face{font-family:'TitleKo';src:local('Noto Sans KR');unicode-range:U+AC00-D7A3,U+1100-11FF,U+3130-318F,U+A960-A97F,U+D7B0-D7FF;}
+@font-face{font-family:'TitleKoSerif';src:local('Noto Serif KR');unicode-range:U+AC00-D7A3,U+1100-11FF,U+3130-318F,U+A960-A97F,U+D7B0-D7FF;}
+@font-face{font-family:'BodyKo';src:local('Noto Sans KR');unicode-range:U+AC00-D7A3,U+1100-11FF,U+3130-318F,U+A960-A97F,U+D7B0-D7FF;}
+@font-face{font-family:'BodyKoSerif';src:local('Noto Serif KR');unicode-range:U+AC00-D7A3,U+1100-11FF,U+3130-318F,U+A960-A97F,U+D7B0-D7FF;}
 :root{
   --accent:#d94f5c;
   --accent-light:#fdeced;
@@ -147,7 +153,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 /* RECEIPT */
 .receipt-wrap{display:flex;flex-direction:column;align-items:center}
 .receipt{width:380px;background:var(--receipt-bg);box-shadow:0 6px 48px rgba(0,0,0,.13),0 1px 4px rgba(0,0,0,.07)}
-.receipt.mono-font{font-family:'Courier Prime','Noto Serif KR',monospace}
+/* mono-font class removed - handled by JS directly */
 
 /* edge style: zigzag — SVG 방식 (html2canvas 호환) */
 .tear{width:380px;flex-shrink:0;display:block;overflow:hidden}
@@ -439,11 +445,37 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       </div>
       <p style="font-size:11px;color:var(--muted);margin-top:4px">전체 포인트 색을 한번에 변경합니다.<br>프로필 탭에서 항목별 색을 개별 조정할 수 있어요.</p>
 
-      <div class="section-head">폰트</div>
-      <div class="font-row">
-        <button class="font-btn gothic active" onclick="setFont('gothic',this)">고딕 (Sans)</button>
-        <button class="font-btn mono" onclick="setFont('mono',this)" style="font-family:'Courier Prime',monospace">모노 + 명조</button>
+      <div class="section-head">타이틀 폰트</div>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:8px">큰 제목에만 적용돼요</p>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <div style="flex:1">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px">영문</div>
+          <div style="display:flex;flex-direction:column;gap:4px" id="tef-grid">
+            <button class="font-btn active" id="tef-sans" onclick="setTitleEnFont('Noto Sans KR',this)" style="font-family:'Noto Sans KR'">Sans</button>
+            <button class="font-btn" id="tef-playfair" onclick="setTitleEnFont('Playfair Display',this)" style="font-family:'Playfair Display'">Playfair</button>
+            <button class="font-btn" id="tef-mono" onclick="setTitleEnFont('Courier Prime',this)" style="font-family:'Courier Prime',monospace">Mono</button>
+            <button class="font-btn" id="tef-dmmono" onclick="setTitleEnFont('DM Mono',this)" style="font-family:'DM Mono',monospace">DM Mono</button>
+          </div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px">한글</div>
+          <div style="display:flex;flex-direction:column;gap:4px" id="tkf-grid">
+            <button class="font-btn active" id="tkf-gothic" onclick="setTitleKoFont('Noto Sans KR',this)" style="font-family:'Noto Sans KR'">고딕</button>
+            <button class="font-btn" id="tkf-serif" onclick="setTitleKoFont('Noto Serif KR',this)" style="font-family:'Noto Serif KR'">명조</button>
+          </div>
+        </div>
       </div>
+
+      <div class="section-head">본문 폰트</div>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:8px">정보항목·자유섹션·기타사항 등에 적용돼요</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px" id="bef-grid">
+        <button class="font-btn active" id="bef-sans" onclick="setBodyEnFont('Noto Sans KR',this)" style="font-family:'Noto Sans KR'">Sans</button>
+        <button class="font-btn" id="bef-serif" onclick="setBodyEnFont('Noto Serif KR',this)" style="font-family:'Noto Serif KR'">명조</button>
+        <button class="font-btn" id="bef-nanumcoding" onclick="setBodyEnFont('Nanum Gothic Coding',this)" style="font-family:'Nanum Gothic Coding',monospace">나눔코딩</button>
+        <button class="font-btn" id="bef-mono" onclick="setBodyEnFont('Courier Prime',this)" style="font-family:'Courier Prime',monospace">Mono (영문)</button>
+        <button class="font-btn" id="bef-dmmono" onclick="setBodyEnFont('DM Mono',this)" style="font-family:'DM Mono',monospace">DM Mono (영문)</button>
+      </div>
+      <p style="font-size:10px;color:var(--muted);margin-top:-10px;margin-bottom:10px">※ 나눔코딩·명조는 한글도 적용돼요</p>
 
       <div class="section-head">영수증 배경색</div>
       <div class="field">
@@ -484,10 +516,20 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       </div>
 
       <div class="section-head">타이틀 크기</div>
-      <div class="img-ctrl-row" style="margin-bottom:12px">
-        <label>크기</label>
-        <input type="range" id="titleSize" min="18" max="64" value="36" step="1" oninput="setTitleSize(this.value)">
+      <div class="img-ctrl-row" style="margin-bottom:8px">
+        <label>폰트</label>
+        <input type="range" id="titleSize" min="14" max="72" value="36" step="1" oninput="setTitleSize(this.value)">
         <span id="titleSizeVal" style="font-size:11px;color:var(--muted);min-width:36px;text-align:right">36px</span>
+      </div>
+      <div class="img-ctrl-row" style="margin-bottom:8px">
+        <label>좌우</label>
+        <input type="range" id="titlePadX" min="0" max="40" value="6" step="1" oninput="setTitlePad()">
+        <span id="titlePadXVal" style="font-size:11px;color:var(--muted);min-width:36px;text-align:right">6px</span>
+      </div>
+      <div class="img-ctrl-row" style="margin-bottom:12px">
+        <label>상하</label>
+        <input type="range" id="titlePadY" min="0" max="24" value="0" step="1" oninput="setTitlePad()">
+        <span id="titlePadYVal" style="font-size:11px;color:var(--muted);min-width:36px;text-align:right">0px</span>
       </div>
 
       <div class="section-head">영수증 엣지 스타일</div>
@@ -643,6 +685,10 @@ let state = {
   nickStyle: 'filled',
   outlineColor: '#1a1a1a',
   font: 'gothic',
+  titleEnFont: 'Noto Sans KR',
+  titleKoFont: 'Noto Sans KR',
+  bodyEnFont: 'Noto Sans KR',
+  bodyKoFont: 'Noto Sans KR',
   tagStyle: 'filled',
   tagColor: '#d94f5c',
   tags: [],
@@ -691,12 +737,57 @@ function setOutlineColor(val){
 }
 
 // ─── FONT ───
-function setFont(f, el) {
-  state.font = f;
-  document.querySelectorAll('.font-btn').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('receipt').classList.toggle('mono-font', f==='mono');
+function applyFonts(){
+  const ten = state.titleEnFont || 'Noto Sans KR';
+  const tko = state.titleKoFont || 'Noto Sans KR';
+  const ben = state.bodyEnFont  || 'Noto Sans KR';
+  // 한글 지원 폰트는 단독으로, 영문 전용은 Noto Sans KR 폴백
+  const koSupported = ['Noto Sans KR','Noto Serif KR','Nanum Gothic Coding'];
+  const bodyFF = koSupported.includes(ben)
+    ? `'${ben}',sans-serif`
+    : `'${ben}','Noto Sans KR',sans-serif`;
+
+  // 타이틀
+  const titleEl = document.getElementById('pMainTitle');
+  if(titleEl) titleEl.style.fontFamily = `'${ten}','${tko}',sans-serif`;
+
+  // 본문: receipt-inner 안 모든 요소 직접 순회해서 style 속성으로 강제 주입
+  const inner = document.querySelector('.receipt-inner');
+  if(!inner) return;
+  // inner 자체
+  inner.style.setProperty('font-family', bodyFF, 'important');
+  // 모든 자식
+  inner.querySelectorAll('*').forEach(el => {
+    if(el === titleEl || (titleEl && titleEl.contains(el))) return;
+    el.style.setProperty('font-family', bodyFF, 'important');
+  });
 }
+
+function setTitleEnFont(font, el){
+  state.titleEnFont = font;
+  document.querySelectorAll('#tef-grid .font-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  applyFonts(); render();
+}
+function setTitleKoFont(font, el){
+  state.titleKoFont = font;
+  document.querySelectorAll('#tkf-grid .font-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  applyFonts(); render();
+}
+function setBodyEnFont(font, el){
+  state.bodyEnFont = font;
+  document.querySelectorAll('#bef-grid .font-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  applyFonts();
+}
+function setBodyKoFont(font, el){ /* removed */ }
+
+function setTitleFont(en, ko, el){ /* legacy */ }
+function setBodyFont(en, ko, el){ /* legacy */ }
+function setEnFont(font, el){ /* legacy */ }
+function setKoFont(font, el){ /* legacy */ }
+function setFont(f, el){ /* legacy */ }
 
 // ─── GLOBAL ACCENT ───
 document.getElementById('swatches').addEventListener('click', e=>{
@@ -1066,7 +1157,7 @@ function render(){
   const titleText=document.getElementById('mainTitle').value||'';
   const tc=colors.mainTitle;
   if(state.nickStyle==='filled'){
-    titleEl.style.cssText=`font-size:${state.titleSize}px;font-weight:900;line-height:1.15;word-break:keep-all;background:${tc};color:white;display:inline-block;padding:0 6px`;
+    titleEl.style.cssText=`font-size:${state.titleSize}px;font-weight:900;line-height:1.15;word-break:keep-all;background:${tc};color:white;display:inline-block;padding:${state.titlePadY}px ${state.titlePadX}px`;
   } else if(state.nickStyle==='outline'){
     const oc=state.outlineColor||'#1a1a1a';titleEl.style.cssText=`font-size:${state.titleSize}px;font-weight:900;line-height:1.1;word-break:keep-all;color:${tc};-webkit-text-stroke:2px ${oc};display:inline-block;background:transparent;paint-order:stroke fill`;
   } else {
@@ -1139,6 +1230,8 @@ function render(){
   noteEl.style.color=colors.noteText;
   noteEl.style.display=noteVal?'block':'none';
 
+  // 폰트 재적용 (render 후 title DOM이 바뀌므로)
+  applyFonts();
   // wave divider 재삽입 (render 후 DOM이 바뀌므로)
   if(state.dividerStyle==='wave'){
     removeDotDividers();
@@ -1304,6 +1397,16 @@ function setTitleSize(val){
   render();
 }
 
+function setTitlePad(){
+  const px = parseInt(document.getElementById('titlePadX').value);
+  const py = parseInt(document.getElementById('titlePadY').value);
+  state.titlePadX = px;
+  state.titlePadY = py;
+  document.getElementById('titlePadXVal').textContent = px+'px';
+  document.getElementById('titlePadYVal').textContent = py+'px';
+  render();
+}
+
 // ─── SAVE / LOAD ───
 function saveSettings(){
   const data = {
@@ -1312,6 +1415,10 @@ function saveSettings(){
       nickStyle: state.nickStyle,
       outlineColor: state.outlineColor,
       font: state.font,
+      titleEnFont: state.titleEnFont,
+      titleKoFont: state.titleKoFont,
+      bodyEnFont: state.bodyEnFont,
+      bodyKoFont: state.bodyKoFont,
       tagStyle: state.tagStyle,
       tagColor: state.tagColor,
       tags: state.tags,
@@ -1319,6 +1426,8 @@ function saveSettings(){
       freeSections: state.freeSections,
       miscSections: state.miscSections,
       titleSize: state.titleSize,
+      titlePadX: state.titlePadX,
+      titlePadY: state.titlePadY,
       dividerStyle: state.dividerStyle,
       bgColor: state.bgColor,
     },
@@ -1367,12 +1476,20 @@ function loadSettings(){
     if(state.bgColor) document.documentElement.style.setProperty('--receipt-bg', state.bgColor);
     // apply divider color
     if(colors.dividerColor) document.documentElement.style.setProperty('--receipt-faint', colors.dividerColor);
-    // apply font
-    document.getElementById('receipt').classList.toggle('mono-font', state.font==='mono');
+    // apply fonts
+    applyFonts();
     // apply title size slider
     if(state.titleSize){
       document.getElementById('titleSize').value = state.titleSize;
       document.getElementById('titleSizeVal').textContent = state.titleSize + 'px';
+    }
+    if(state.titlePadX!==undefined){
+      document.getElementById('titlePadX').value = state.titlePadX;
+      document.getElementById('titlePadXVal').textContent = state.titlePadX+'px';
+    }
+    if(state.titlePadY!==undefined){
+      document.getElementById('titlePadY').value = state.titlePadY;
+      document.getElementById('titlePadYVal').textContent = state.titlePadY+'px';
     }
     // re-render editors
     renderInfoEditor();
