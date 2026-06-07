@@ -553,7 +553,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   <div class="receipt-wrap" id="receiptWrap">
     <div class="tear tear-top" id="tearTop">
       <svg viewBox="0 0 380 14" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" id="tearTopSvg">
-        <polygon points="0,14 0.0,14 7.6,0 15.2,14 22.8,0 30.4,14 38.0,0 45.6,14 53.2,0 60.8,14 68.4,0 76.0,14 83.6,0 91.2,14 98.8,0 106.4,14 114.0,0 121.6,14 129.2,0 136.8,14 144.4,0 152.0,14 159.6,0 167.2,14 174.8,0 182.4,14 190.0,0 197.6,14 205.2,0 212.8,14 220.4,0 228.0,14 235.6,0 243.2,14 250.8,0 258.4,14 266.0,0 273.6,14 281.2,0 288.8,14 296.4,0 304.0,14 311.6,0 319.2,14 326.8,0 334.4,14 342.0,0 349.6,14 357.2,0 364.8,14 372.4,0 380.0,14 387.6,0 380,14" fill="var(--receipt-bg)"/>
+        <polygon points="0,14 0.0,14 7.6,0 15.2,14 22.8,0 30.4,14 38.0,0 45.6,14 53.2,0 60.8,14 68.4,0 76.0,14 83.6,0 91.2,14 98.8,0 106.4,14 114.0,0 121.6,14 129.2,0 136.8,14 144.4,0 152.0,14 159.6,0 167.2,14 174.8,0 182.4,14 190.0,0 197.6,14 205.2,0 212.8,14 220.4,0 228.0,14 235.6,0 243.2,14 250.8,0 258.4,14 266.0,0 273.6,14 281.2,0 288.8,14 296.4,0 304.0,14 311.6,0 319.2,14 326.8,0 334.4,14 342.0,0 349.6,14 357.2,0 364.8,14 372.4,0 380.0,14 387.6,0 380,14" fill="var(--receipt-bg)" id="tearTopPoly"/>
       </svg>
     </div>
     <div class="receipt" id="receipt">
@@ -582,8 +582,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     </div><!-- receipt -->
     <div class="tear tear-bottom" id="tearBottom">
       <svg viewBox="0 0 380 14" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" id="tearBottomSvg">
-        <rect width="380" height="14" fill="var(--receipt-bg)"/>
-        <polygon points="0,0 0.0,0 7.6,14 15.2,0 22.8,14 30.4,0 38.0,14 45.6,0 53.2,14 60.8,0 68.4,14 76.0,0 83.6,14 91.2,0 98.8,14 106.4,0 114.0,14 121.6,0 129.2,14 136.8,0 144.4,14 152.0,0 159.6,14 167.2,0 174.8,14 182.4,0 190.0,14 197.6,0 205.2,14 212.8,0 220.4,14 228.0,0 235.6,14 243.2,0 250.8,14 258.4,0 266.0,14 273.6,0 281.2,14 288.8,0 296.4,14 304.0,0 311.6,14 319.2,0 326.8,14 334.4,0 342.0,14 349.6,0 357.2,14 364.8,0 372.4,14 380.0,0 387.6,14 380,0" fill="var(--bg)"/>
+        <polygon points="0,14 0.0,0 7.6,14 15.2,0 22.8,14 30.4,0 38.0,14 45.6,0 53.2,14 60.8,0 68.4,14 76.0,0 83.6,14 91.2,0 98.8,14 106.4,0 114.0,14 121.6,0 129.2,14 136.8,0 144.4,14 152.0,0 159.6,14 167.2,0 174.8,14 182.4,0 190.0,14 197.6,0 205.2,14 212.8,0 220.4,14 228.0,0 235.6,14 243.2,0 250.8,14 258.4,0 266.0,14 273.6,0 281.2,14 288.8,0 296.4,14 304.0,0 311.6,14 319.2,0 326.8,14 334.4,0 342.0,14 349.6,0 357.2,14 364.8,0 372.4,14 380.0,0 380,14 0,14" fill="var(--receipt-bg)" id="tearBotPoly"/>
       </svg>
     </div>
   </div>
@@ -1234,10 +1233,10 @@ function setBgColor(val, source){
   document.getElementById('bgColorInput').value = val;
   document.getElementById('bgCustomPreview').style.background = val;
   // SVG tear fill 업데이트
-  const topPoly = document.querySelector('#tearTopSvg polygon');
-  const botRect = document.querySelector('#tearBottomSvg rect');
+  const topPoly = document.getElementById('tearTopPoly');
+  const botPoly = document.getElementById('tearBotPoly');
   if(topPoly) topPoly.setAttribute('fill', val);
-  if(botRect) botRect.setAttribute('fill', val);
+  if(botPoly) botPoly.setAttribute('fill', val);
   // active 표시
   document.querySelectorAll('[data-bg]').forEach(s=>s.classList.remove('active'));
   if(source && source!=='custom' && source.classList){
@@ -1361,6 +1360,31 @@ function showToast(msg){
 
 function resetAll(){if(!confirm('초기화할까요?'))return;location.reload();}
 
+function resolveCssVar(varStr){
+  // var(--xxx) → 실제 색상값
+  const m = varStr.match(/var\(([^)]+)\)/);
+  if(!m) return varStr;
+  return getComputedStyle(document.documentElement).getPropertyValue(m[1]).trim();
+}
+
+function fixSvgVars(){
+  // SVG 안의 fill="var(--xxx)"를 실제 색상으로 교체
+  const svgEls = document.querySelectorAll('#tearTopPoly,#tearBotPoly');
+  const saved = [];
+  svgEls.forEach(el=>{
+    const orig = el.getAttribute('fill');
+    saved.push({el, orig});
+    if(orig && orig.includes('var('))
+      el.setAttribute('fill', resolveCssVar(orig));
+  });
+  // 구분선도 CSS var 해결
+  return saved;
+}
+
+function restoreSvgVars(saved){
+  saved.forEach(({el, orig})=> el.setAttribute('fill', orig));
+}
+
 function downloadPNG(){
   const go=()=>{
     const wrap=document.getElementById('receiptWrap');
@@ -1368,9 +1392,11 @@ function downloadPNG(){
     const prevBg=area.style.background;
     area.style.background='transparent';
 
-    // 배너 캔버스들을 고해상도로 임시 재렌더
-    const dpr=window.devicePixelRatio||1;
-    const SCALE=3; // 3배 고해상도
+    // SVG CSS 변수 → 실제 색상 (html2canvas 호환)
+    const savedVars = fixSvgVars();
+
+    // 배너 캔버스 고해상도 재렌더
+    const SCALE=3;
     state.banners.forEach((b,i)=>{
       if(!b.imgObj)return;
       const c=document.getElementById('pcanvas-'+i);
@@ -1393,7 +1419,7 @@ function downloadPNG(){
       logging:false,
     }).then(c=>{
       area.style.background=prevBg;
-      // 저장 후 캔버스를 원래 dpr로 복원
+      restoreSvgVars(savedVars);
       state.banners.forEach((b,i)=>{ if(b.imgObj) drawCanvas(i); });
       const a=document.createElement('a');
       a.download='화송이영수증.png';
