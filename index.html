@@ -503,9 +503,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <!-- 배경 타입 -->
       <div class="field">
         <label class="field-label">저장 배경</label>
-        <div class="style-row" style="margin-bottom:8px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
           <button class="style-btn active" id="savebg-transparent" onclick="setSaveBg('transparent',this)">투명</button>
           <button class="style-btn" id="savebg-color" onclick="setSaveBg('color',this)">색상</button>
+          <button class="style-btn" id="savebg-gradient" onclick="setSaveBg('gradient',this)">그라데이션</button>
           <button class="style-btn" id="savebg-blur" onclick="setSaveBg('blur',this)">흐림 이미지</button>
         </div>
 
@@ -516,6 +517,28 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
             <input type="color" id="saveBgColorInput" value="#f2f3f5" oninput="document.getElementById('swatch-saveBgColor').style.background=this.value;applyPreviewBg()">
           </div>
           <span style="font-size:12px;color:var(--muted)">배경 색상 선택</span>
+        </div>
+
+        <!-- 그라데이션 -->
+        <div id="saveBgGradRow" style="display:none;flex-direction:column;gap:8px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11px;color:var(--muted);white-space:nowrap">색상 1</span>
+            <div class="color-dot">
+              <div class="color-dot-swatch" id="swatch-saveGrad1" style="background:#d94f5c"></div>
+              <input type="color" id="saveGrad1Input" value="#d94f5c" oninput="document.getElementById('swatch-saveGrad1').style.background=this.value;applyPreviewBg()">
+            </div>
+            <span style="font-size:11px;color:var(--muted);white-space:nowrap">색상 2</span>
+            <div class="color-dot">
+              <div class="color-dot-swatch" id="swatch-saveGrad2" style="background:#9b5de5"></div>
+              <input type="color" id="saveGrad2Input" value="#9b5de5" oninput="document.getElementById('swatch-saveGrad2').style.background=this.value;applyPreviewBg()">
+            </div>
+          </div>
+          <div style="display:flex;gap:4px;align-items:center">
+            <span style="font-size:11px;color:var(--muted)">방향</span>
+            <button class="style-btn active" id="sgrad-right" onclick="setSaveGradDir('to right',this)" style="flex:unset;padding:4px 10px;font-size:12px">→</button>
+            <button class="style-btn" id="sgrad-bottom" onclick="setSaveGradDir('to bottom',this)" style="flex:unset;padding:4px 10px;font-size:12px">↓</button>
+            <button class="style-btn" id="sgrad-diag" onclick="setSaveGradDir('135deg',this)" style="flex:unset;padding:4px 10px;font-size:12px">↘</button>
+          </div>
         </div>
 
         <!-- 흐림 이미지 업로드 -->
@@ -1884,7 +1907,8 @@ function checkMobile(){
 }
 
 // ─── SAVE OPTIONS ───
-let saveBgType = 'transparent'; // transparent | color | blur
+let saveBgType = 'transparent'; // transparent | color | gradient | blur
+let saveGradDir = 'to right';
 let bgBlurImgSrc = null;
 
 function setSaveBg(type, el){
@@ -1918,6 +1942,11 @@ function applyPreviewBg(){
   } else if(saveBgType === 'color'){
     const col = document.getElementById('saveBgColorInput').value;
     area.style.background = col;
+    area.style.backgroundImage = '';
+  } else if(saveBgType === 'gradient'){
+    const g1 = document.getElementById('saveGrad1Input').value;
+    const g2 = document.getElementById('saveGrad2Input').value;
+    area.style.background = `linear-gradient(${saveGradDir},${g1},${g2})`;
     area.style.backgroundImage = '';
   } else if(saveBgType === 'blur' && bgBlurImgSrc){
     const blur = document.getElementById('bgBlurAmount').value;
@@ -2080,8 +2109,20 @@ function downloadPNG(){
       const ctx = final.getContext('2d');
 
       if(saveBgType === 'color'){
-        // 단색 배경
         ctx.fillStyle = document.getElementById('saveBgColorInput').value;
+        ctx.fillRect(0,0,fw,fh);
+
+      } else if(saveBgType === 'gradient'){
+        const g1 = document.getElementById('saveGrad1Input').value;
+        const g2 = document.getElementById('saveGrad2Input').value;
+        const grad = ctx.createLinearGradient(
+          0, 0,
+          saveGradDir==='to bottom' ? 0 : saveGradDir==='135deg' ? fw : fw,
+          saveGradDir==='to bottom' ? fh : saveGradDir==='135deg' ? fh : 0
+        );
+        grad.addColorStop(0, g1);
+        grad.addColorStop(1, g2);
+        ctx.fillStyle = grad;
         ctx.fillRect(0,0,fw,fh);
 
       } else if(saveBgType === 'blur' && bgBlurImgSrc){
