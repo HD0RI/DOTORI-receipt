@@ -149,19 +149,17 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .receipt{width:380px;background:var(--receipt-bg);box-shadow:0 6px 48px rgba(0,0,0,.13),0 1px 4px rgba(0,0,0,.07)}
 .receipt.mono-font{font-family:'Courier Prime','Noto Sans KR',monospace}
 
-/* edge style: zigzag (default) */
-.tear{width:100%;height:14px;background:var(--bg);position:relative;flex-shrink:0}
-.tear-top::after,.tear-bottom::before{content:'';position:absolute;left:0;right:0;height:14px;background:var(--receipt-bg)}
-.tear-top::after{bottom:0;clip-path:polygon(0% 100%,2% 0%,4% 100%,6% 0%,8% 100%,10% 0%,12% 100%,14% 0%,16% 100%,18% 0%,20% 100%,22% 0%,24% 100%,26% 0%,28% 100%,30% 0%,32% 100%,34% 0%,36% 100%,38% 0%,40% 100%,42% 0%,44% 100%,46% 0%,48% 100%,50% 0%,52% 100%,54% 0%,56% 100%,58% 0%,60% 100%,62% 0%,64% 100%,66% 0%,68% 100%,70% 0%,72% 100%,74% 0%,76% 100%,78% 0%,80% 100%,82% 0%,84% 100%,86% 0%,88% 100%,90% 0%,92% 100%,94% 0%,96% 100%,98% 0%,100% 100%)}
-.tear-bottom::before{top:0;clip-path:polygon(0% 0%,2% 100%,4% 0%,6% 100%,8% 0%,10% 100%,12% 0%,14% 100%,16% 0%,18% 100%,20% 0%,22% 100%,24% 0%,26% 100%,28% 0%,30% 100%,32% 0%,34% 100%,36% 0%,38% 100%,40% 0%,42% 100%,44% 0%,46% 100%,48% 0%,50% 100%,52% 0%,54% 100%,56% 0%,58% 100%,60% 0%,62% 100%,64% 0%,66% 100%,68% 0%,70% 100%,72% 0%,74% 100%,76% 0%,78% 100%,80% 0%,82% 100%,84% 0%,86% 100%,88% 0%,90% 100%,92% 0%,94% 100%,96% 0%,98% 100%,100% 0%)}
+/* edge style: zigzag — SVG 방식 (html2canvas 호환) */
+.tear{width:380px;flex-shrink:0;display:block;overflow:hidden}
+.tear svg{display:block;width:100%;height:14px}
 
 /* edge style: rounded corners */
-.edge-rounded .tear{display:none}
+.edge-rounded .tear{visibility:hidden;height:0}
 .edge-rounded .receipt{border-radius:20px;overflow:hidden}
 .edge-rounded .receipt-inner{border-left:none;border-right:none}
 
 /* edge style: square */
-.edge-square .tear{display:none}
+.edge-square .tear{visibility:hidden;height:0}
 .edge-square .receipt{border-radius:0;overflow:hidden}
 .edge-square .receipt-inner{border-left:none;border-right:none}
 
@@ -191,29 +189,45 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .img-ctrl-row label{font-size:11px;color:var(--muted);white-space:nowrap;min-width:24px}
 .img-ctrl-row input[type=range]{flex:1}
 .img-ctrl-row span{font-size:11px;color:var(--muted);min-width:36px;text-align:right}
-.r-title-area{padding:10px 0 8px;border-bottom:1px dashed var(--receipt-faint)}
+.r-title-area{padding:10px 0 8px}
 .r-main-title{font-size:36px;font-weight:900;line-height:1.1;word-break:keep-all}
 .r-sub-title{font-size:13px;margin-top:2px}
 .r-tags{display:flex;flex-wrap:wrap;gap:4px;padding:8px 0}
 .r-tag{font-size:10px;padding:2px 8px;border-radius:20px;border:1px solid;font-weight:700;letter-spacing:.05em}
-.r-dashed{border-top:1px dashed var(--receipt-faint)}
-.r-divider-solid .r-dashed,.r-divider-solid .r-title-area,.r-divider-solid .r-info-section,.r-divider-solid .r-free-section,.r-divider-solid .r-checklist,.r-divider-solid .r-note{border-top-style:solid!important;border-bottom-style:solid!important}
-.r-divider-double .r-dashed,.r-divider-double .r-title-area,.r-divider-double .r-info-section,.r-divider-double .r-free-section,.r-divider-double .r-checklist,.r-divider-double .r-note{border-top:3px double var(--receipt-faint)!important;border-bottom:3px double var(--receipt-faint)!important}
-.r-divider-wave .r-dashed,.r-divider-wave .r-title-area,.r-divider-wave .r-info-section,.r-divider-wave .r-free-section,.r-divider-wave .r-checklist,.r-divider-wave .r-note{border-top-style:dotted!important;border-bottom-style:dotted!important}
-.r-info-section{padding:8px 0}
+.r-dashed{border-top:1px dashed var(--receipt-faint);position:relative}
+/* 실선 — 얇게 1px */
+.r-divider-solid .r-dashed,
+.r-divider-solid .r-free-section,
+.r-divider-solid .r-checklist,
+.r-divider-solid .r-note{border-top:1px solid var(--receipt-faint)!important}
+/* 이중선 */
+.r-divider-double .r-dashed,
+.r-divider-double .r-free-section,
+.r-divider-double .r-checklist,
+.r-divider-double .r-note{border-top:3px double var(--receipt-faint)!important}
+/* 점점(원형) */
+.r-divider-wave .r-dashed,
+.r-divider-wave .r-free-section,
+.r-divider-wave .r-checklist,
+.r-divider-wave .r-note{border-top:none!important;padding-top:9px!important;position:relative}
+.r-divider-wave .r-dashed::before,
+.r-divider-wave .r-free-section::before,
+.r-divider-wave .r-checklist::before,
+.r-divider-wave .r-note::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background-image:radial-gradient(circle, var(--receipt-faint) 1.5px, transparent 1.5px);background-size:8px 4px;background-repeat:repeat-x}
+.r-info-section{padding:8px 0;position:relative}
 .r-info-row{display:grid;grid-template-columns:80px 1fr;gap:4px;margin-bottom:7px}
 .r-info-row:last-child{margin-bottom:0}
 .r-info-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding-top:1px}
 .r-info-value{font-size:12px;line-height:1.55;word-break:keep-all}
-.r-free-section{padding:8px 0;border-top:1px dashed var(--receipt-faint)}
+.r-free-section{padding:8px 0;position:relative}
 .r-free-label{font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-bottom:4px}
 .r-free-content{font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:keep-all}
-.r-checklist{padding:8px 0;border-top:1px dashed var(--receipt-faint)}
+.r-checklist{padding:8px 0;position:relative}
 .r-checklist-title{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
 .r-checklist-items{display:flex;flex-direction:column;gap:3px}
 .r-checklist-item{font-size:12px;display:flex;align-items:center;gap:6px}
 .r-checklist-item::before{content:'□';font-size:11px;color:var(--receipt-faint);flex-shrink:0}
-.r-note{padding:6px 0;border-top:1px dashed var(--receipt-faint);font-size:10px;text-align:center;line-height:1.6}
+.r-note{padding:6px 0;font-size:10px;text-align:center;line-height:1.6;position:relative}
 .r-barcode{padding:10px 0 14px;display:flex;flex-direction:column;align-items:center;gap:5px}
 .r-barcode svg{width:100%;height:50px}
 .r-barcode-num{font-size:9px;letter-spacing:.2em;font-family:'Courier Prime',monospace}
@@ -252,7 +266,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 <div class="topbar">
   <div class="topbar-title">🎟 화송이 영수증</div>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="preview-hint">미리보기 · 저장 시 2배 해상도 PNG</span>
     <button class="btn" onclick="saveSettings()" title="현재 설정을 브라우저에 저장">💾 저장</button>
     <button class="btn" onclick="loadSettings()" title="저장된 설정 불러오기">📂 불러오기</button>
     <button class="btn" onclick="resetAll()">초기화</button>
@@ -386,7 +399,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
                 <div class="color-dot-swatch" id="swatch-barcodeMain" style="background:#1a1a1a"></div>
                 <input type="color" value="#1a1a1a" oninput="setBarcodeColor('main',this.value)">
               </div>
-              <span style="font-size:11px;color:var(--muted)">검정</span>
+              
             </div>
           </div>
           <div style="flex:1">
@@ -396,7 +409,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
                 <div class="color-dot-swatch" id="swatch-barcodeSub" style="background:#d94f5c"></div>
                 <input type="color" value="#d94f5c" oninput="setBarcodeColor('sub',this.value)">
               </div>
-              <span style="font-size:11px;color:var(--muted)" id="barcodeSubLabel">붉은색</span>
+              
             </div>
           </div>
         </div>
@@ -538,7 +551,11 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 <!-- PREVIEW -->
 <div class="preview-area">
   <div class="receipt-wrap" id="receiptWrap">
-    <div class="tear tear-top"></div>
+    <div class="tear tear-top" id="tearTop">
+      <svg viewBox="0 0 380 14" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" id="tearTopSvg">
+        <polygon points="0,14 0.0,14 7.6,0 15.2,14 22.8,0 30.4,14 38.0,0 45.6,14 53.2,0 60.8,14 68.4,0 76.0,14 83.6,0 91.2,14 98.8,0 106.4,14 114.0,0 121.6,14 129.2,0 136.8,14 144.4,0 152.0,14 159.6,0 167.2,14 174.8,0 182.4,14 190.0,0 197.6,14 205.2,0 212.8,14 220.4,0 228.0,14 235.6,0 243.2,14 250.8,0 258.4,14 266.0,0 273.6,14 281.2,0 288.8,14 296.4,0 304.0,14 311.6,0 319.2,14 326.8,0 334.4,14 342.0,0 349.6,14 357.2,0 364.8,14 372.4,0 380.0,14 387.6,0 380,14" fill="var(--receipt-bg)"/>
+      </svg>
+    </div>
     <div class="receipt" id="receipt">
       <div class="receipt-inner">
         <div class="r-topline">
@@ -553,17 +570,22 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
           <div class="r-sub-title" id="pSubTitle">카네사키 시로x릴리 디아즈</div>
           <div class="r-tags" id="pTags" style="display:none"></div>
         </div>
-        <div class="r-info-section r-dashed" id="pInfoSection"></div>
+        <div class="r-info-section" id="pInfoSection" style="border-top:none"></div>
         <div id="pFreeSections"></div>
         <div id="pMiscSections"></div>
-        <div class="r-note" id="pNote"></div>
+        <div class="r-note r-dashed" id="pNote"></div>
         <div class="r-barcode">
           <svg id="pBarcode" viewBox="0 0 300 50" preserveAspectRatio="none"></svg>
           <div class="r-barcode-num" id="pBarcodeNum">780541239876</div>
         </div>
       </div><!-- receipt-inner -->
     </div><!-- receipt -->
-    <div class="tear tear-bottom"></div>
+    <div class="tear tear-bottom" id="tearBottom">
+      <svg viewBox="0 0 380 14" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" id="tearBottomSvg">
+        <rect width="380" height="14" fill="var(--receipt-bg)"/>
+        <polygon points="0,0 0.0,0 7.6,14 15.2,0 22.8,14 30.4,0 38.0,14 45.6,0 53.2,14 60.8,0 68.4,14 76.0,0 83.6,14 91.2,0 98.8,14 106.4,0 114.0,14 121.6,0 129.2,14 136.8,0 144.4,14 152.0,0 159.6,14 167.2,0 174.8,14 182.4,0 190.0,14 197.6,0 205.2,14 212.8,0 220.4,14 228.0,0 235.6,14 243.2,0 250.8,14 258.4,0 266.0,14 273.6,0 281.2,14 288.8,0 296.4,14 304.0,0 311.6,14 319.2,0 326.8,14 334.4,0 342.0,14 349.6,0 357.2,14 364.8,0 372.4,14 380.0,0 387.6,14 380,0" fill="var(--bg)"/>
+      </svg>
+    </div>
   </div>
 </div>
 
@@ -1062,10 +1084,9 @@ function render(){
   if(state.tags.length){
     tagsEl.style.display='flex';
     // 태그 있으면 title-area border 제거, 태그 아래에 점선
-    titleArea.style.borderBottom='none';
-    tagsEl.style.borderBottom='1px dashed var(--receipt-faint)';
-    tagsEl.style.paddingBottom='8px';
-    document.getElementById('pInfoSection').style.borderTop='none';
+    // title-area has no border-bottom now
+    tagsEl.style.borderBottom='none';
+    tagsEl.style.paddingBottom='0';
     const tc=state.tagColor;
     tagsEl.innerHTML=state.tags.map(t=>{
       if(state.tagStyle==='filled'){
@@ -1076,9 +1097,8 @@ function render(){
     }).join('');
   } else {
     tagsEl.style.display='none';
-    // 태그 없으면 title-area border 복원
-    titleArea.style.borderBottom='';
-    document.getElementById('pInfoSection').style.borderTop='';
+    tagsEl.style.borderBottom='none';
+
   }
 
   // info rows
@@ -1094,7 +1114,7 @@ function render(){
   // free sections
   const freeEl=document.getElementById('pFreeSections');
   freeEl.innerHTML=state.freeSections.map(s=>
-    `<div class="r-free-section">
+    `<div class="r-free-section r-dashed">
       <div class="r-free-label" style="color:${s.labelColor}">${esc(s.label)}</div>
       <div class="r-free-content" style="color:${s.contentColor}">${esc(s.content)}</div>
     </div>`
@@ -1105,7 +1125,7 @@ function render(){
   miscEl.innerHTML=state.miscSections.map(sec=>{
     const items=sec.items.filter(x=>x.trim());
     if(!items.length&&!sec.title.trim())return'';
-    return `<div class="r-checklist">
+    return `<div class="r-checklist r-dashed">
       <div class="r-checklist-title" style="color:${sec.titleColor}">${esc(sec.title)}</div>
       <div class="r-checklist-items">${items.map(item=>`<div class="r-checklist-item" style="color:${sec.itemColor}">${esc(item)}</div>`).join('')}</div>
     </div>`;
@@ -1168,7 +1188,12 @@ function setEdge(style, el) {
   wrap.classList.remove('edge-rounded','edge-square');
   if(style==='rounded') wrap.classList.add('edge-rounded');
   else if(style==='square') wrap.classList.add('edge-square');
-  // zigzag = default, no class needed
+  // tear visibility
+  const tears = document.querySelectorAll('.tear');
+  tears.forEach(t=>{
+    t.style.visibility = (style==='rounded'||style==='square') ? 'hidden' : 'visible';
+    t.style.height = (style==='rounded'||style==='square') ? '0' : '';
+  });
 }
 
 // ─── ADMIT TEXT ───
@@ -1208,6 +1233,11 @@ function setBgColor(val, source){
   document.documentElement.style.setProperty('--receipt-bg', val);
   document.getElementById('bgColorInput').value = val;
   document.getElementById('bgCustomPreview').style.background = val;
+  // SVG tear fill 업데이트
+  const topPoly = document.querySelector('#tearTopSvg polygon');
+  const botRect = document.querySelector('#tearBottomSvg rect');
+  if(topPoly) topPoly.setAttribute('fill', val);
+  if(botRect) botRect.setAttribute('fill', val);
   // active 표시
   document.querySelectorAll('[data-bg]').forEach(s=>s.classList.remove('active'));
   if(source && source!=='custom' && source.classList){
@@ -1334,13 +1364,41 @@ function resetAll(){if(!confirm('초기화할까요?'))return;location.reload();
 function downloadPNG(){
   const go=()=>{
     const wrap=document.getElementById('receiptWrap');
-    // 저장 전 preview-area 배경 임시 제거
     const area=document.querySelector('.preview-area');
     const prevBg=area.style.background;
     area.style.background='transparent';
-    html2canvas(wrap,{scale:2,backgroundColor:null,useCORS:true,allowTaint:true}).then(c=>{
+
+    // 배너 캔버스들을 고해상도로 임시 재렌더
+    const dpr=window.devicePixelRatio||1;
+    const SCALE=3; // 3배 고해상도
+    state.banners.forEach((b,i)=>{
+      if(!b.imgObj)return;
+      const c=document.getElementById('pcanvas-'+i);
+      if(!c)return;
+      const cw=c.offsetWidth;
+      const ch=b.canvasH;
+      c.width=cw*SCALE;
+      c.height=ch*SCALE;
+      const ctx=c.getContext('2d');
+      ctx.scale(SCALE,SCALE);
+      ctx.clearRect(0,0,cw,ch);
+      ctx.drawImage(b.imgObj,b.x,b.y,b.imgObj.width*b.scale,b.imgObj.height*b.scale);
+    });
+
+    html2canvas(wrap,{
+      scale:SCALE,
+      backgroundColor:null,
+      useCORS:true,
+      allowTaint:true,
+      logging:false,
+    }).then(c=>{
       area.style.background=prevBg;
-      const a=document.createElement('a');a.download='ticket.png';a.href=c.toDataURL('image/png');a.click();
+      // 저장 후 캔버스를 원래 dpr로 복원
+      state.banners.forEach((b,i)=>{ if(b.imgObj) drawCanvas(i); });
+      const a=document.createElement('a');
+      a.download='화송이영수증.png';
+      a.href=c.toDataURL('image/png');
+      a.click();
     });
   };
   if(window.html2canvas){go();}else{
