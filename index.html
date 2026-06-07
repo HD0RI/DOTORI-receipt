@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>화송이 영수증</title>
-<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -147,7 +147,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 /* RECEIPT */
 .receipt-wrap{display:flex;flex-direction:column;align-items:center}
 .receipt{width:380px;background:var(--receipt-bg);box-shadow:0 6px 48px rgba(0,0,0,.13),0 1px 4px rgba(0,0,0,.07)}
-.receipt.mono-font{font-family:'Courier Prime','Noto Sans KR',monospace}
+.receipt.mono-font{font-family:'Courier Prime','Noto Serif KR',monospace}
 
 /* edge style: zigzag — SVG 방식 (html2canvas 호환) */
 .tear{width:380px;flex-shrink:0;display:block;overflow:hidden}
@@ -190,7 +190,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .img-ctrl-row input[type=range]{flex:1}
 .img-ctrl-row span{font-size:11px;color:var(--muted);min-width:36px;text-align:right}
 .r-title-area{padding:10px 0 8px}
-.r-main-title{font-size:36px;font-weight:900;line-height:1.2;word-break:keep-all;vertical-align:top}
+.r-main-title{font-size:36px;font-weight:900;line-height:1.15;word-break:keep-all}
 .r-sub-title{font-size:13px;margin-top:2px}
 .r-tags{display:flex;flex-wrap:wrap;gap:4px;padding:8px 0}
 .r-tag{font-size:10px;padding:2px 8px;border-radius:20px;border:1px solid;font-weight:700;letter-spacing:.05em}
@@ -441,8 +441,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
       <div class="section-head">폰트</div>
       <div class="font-row">
-        <button class="font-btn gothic active" onclick="setFont('gothic',this)">고딕</button>
-        <button class="font-btn mono" onclick="setFont('mono',this)" style="font-family:'Courier Prime',monospace">모노</button>
+        <button class="font-btn gothic active" onclick="setFont('gothic',this)">고딕 (Sans)</button>
+        <button class="font-btn mono" onclick="setFont('mono',this)" style="font-family:'Courier Prime',monospace">모노 + 명조</button>
       </div>
 
       <div class="section-head">영수증 배경색</div>
@@ -1066,7 +1066,7 @@ function render(){
   const titleText=document.getElementById('mainTitle').value||'';
   const tc=colors.mainTitle;
   if(state.nickStyle==='filled'){
-    titleEl.style.cssText=`font-size:${state.titleSize}px;font-weight:900;line-height:1.2;word-break:keep-all;background:${tc};color:white;display:inline-block;padding:2px 6px;vertical-align:top`;
+    titleEl.style.cssText=`font-size:${state.titleSize}px;font-weight:900;line-height:1.15;word-break:keep-all;background:${tc};color:white;display:inline-block;padding:0 6px`;
   } else if(state.nickStyle==='outline'){
     const oc=state.outlineColor||'#1a1a1a';titleEl.style.cssText=`font-size:${state.titleSize}px;font-weight:900;line-height:1.1;word-break:keep-all;color:${tc};-webkit-text-stroke:2px ${oc};display:inline-block;background:transparent;paint-order:stroke fill`;
   } else {
