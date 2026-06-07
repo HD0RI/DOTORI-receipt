@@ -1839,8 +1839,15 @@ function downloadPNG(){
   const go=()=>{
     const wrap=document.getElementById('receiptWrap');
     const area=document.querySelector('.preview-area');
-    const prevBg=area.style.background;
-    area.style.background='transparent';
+    // 배경 전체 상태 저장
+    const prevBg = area.style.background;
+    const prevBgImage = area.style.backgroundImage;
+    const prevBgSize = area.style.backgroundSize;
+    const prevBgPos = area.style.backgroundPosition;
+    const prevBgAttach = area.style.backgroundAttachment;
+    // 캡처용 배경 제거
+    area.style.background = 'transparent';
+    area.style.backgroundImage = '';
 
     // SVG CSS 변수 → 실제 색상 (html2canvas 호환)
     const savedVars = fixSvgVars();
@@ -1868,8 +1875,12 @@ function downloadPNG(){
       allowTaint:true,
       logging:false,
     }).then(async ticketCanvas=>{
-      // 미리보기 원복
+      // 미리보기 원복 (전체 배경 상태 복원)
       area.style.background = prevBg;
+      area.style.backgroundImage = prevBgImage;
+      area.style.backgroundSize = prevBgSize;
+      area.style.backgroundPosition = prevBgPos;
+      area.style.backgroundAttachment = prevBgAttach;
       restoreSvgVars(savedVars);
       state.banners.forEach((b,i)=>{ if(b.imgObj) drawCanvas(i); });
 
