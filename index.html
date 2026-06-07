@@ -1753,6 +1753,7 @@ function applyPreviewBg(){
   if(saveBgType !== 'blur'){
     const overlay = document.getElementById('previewBgOverlay');
     if(overlay) overlay.remove();
+    area.style.backgroundAttachment = '';
     if(saveBgType !== 'color') area.style.backgroundImage = '';
   }
 }
