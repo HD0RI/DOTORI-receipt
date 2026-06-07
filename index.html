@@ -209,11 +209,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .r-divider-wave .r-dashed,
 .r-divider-wave .r-free-section,
 .r-divider-wave .r-checklist,
-.r-divider-wave .r-note{border-top:none!important;padding-top:9px!important;position:relative}
-.r-divider-wave .r-dashed::before,
-.r-divider-wave .r-free-section::before,
-.r-divider-wave .r-checklist::before,
-.r-divider-wave .r-note::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background-image:radial-gradient(circle, var(--receipt-faint) 1.5px, transparent 1.5px);background-size:8px 4px;background-repeat:repeat-x}
+.r-divider-wave .r-note{border-top:none!important;padding-top:6px!important}
+.dot-divider{width:100%;height:4px;display:block;margin-bottom:4px}
 .r-info-section{padding:8px 0;position:relative}
 .r-info-row{display:grid;grid-template-columns:80px 1fr;gap:4px;margin-bottom:7px}
 .r-info-row:last-child{margin-bottom:0}
@@ -1142,6 +1139,11 @@ function render(){
   noteEl.style.color=colors.noteText;
   noteEl.style.display=noteVal?'block':'none';
 
+  // wave divider 재삽입 (render 후 DOM이 바뀌므로)
+  if(state.dividerStyle==='wave'){
+    removeDotDividers();
+    insertDotDividers();
+  }
   // banners: just redraw existing canvases, don't rebuild DOM
   state.banners.forEach((b,i)=>{ if(b.imgObj) drawCanvas(i); });
 
@@ -1229,6 +1231,7 @@ function setDividerColor(val){
   colors.dividerColor = val;
   document.getElementById('swatch-dividerColor').style.background = val;
   document.documentElement.style.setProperty('--receipt-faint', val);
+  if(state.dividerStyle==='wave') updateDotDividers();
 }
 
 // ─── BG COLOR ───
@@ -1250,15 +1253,48 @@ function setBgColor(val, source){
 }
 
 // ─── DIVIDER ───
+function makeDotSvg(color){
+  const c = color || getComputedStyle(document.documentElement).getPropertyValue('--receipt-faint').trim() || '#c0b8b0';
+  // 원형 점들을 SVG circle로 직접 그림
+  let circles = '';
+  for(let x = 4; x < 340; x += 8){
+    circles += `<circle cx="${x}" cy="2" r="1.5" fill="${c}"/>`;
+  }
+  return `<svg class="dot-divider" viewBox="0 0 336 4" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">${circles}</svg>`;
+}
+
+function updateDotDividers(){
+  const color = colors.dividerColor || getComputedStyle(document.documentElement).getPropertyValue('--receipt-faint').trim();
+  document.querySelectorAll('.dot-divider').forEach(el=>{
+    const parent = el.parentElement;
+    el.outerHTML = makeDotSvg(color);
+  });
+}
+
+function insertDotDividers(){
+  // r-dashed, r-free-section, r-checklist, r-note 앞에 dot SVG 삽입
+  const targets = document.querySelectorAll('.r-dashed, .r-free-section, .r-checklist, .r-note');
+  targets.forEach(el=>{
+    if(!el.querySelector('.dot-divider')){
+      el.insertAdjacentHTML('afterbegin', makeDotSvg(colors.dividerColor));
+    }
+  });
+}
+
+function removeDotDividers(){
+  document.querySelectorAll('.dot-divider').forEach(el=>el.remove());
+}
+
 function setDivider(style, el){
   state.dividerStyle = style;
   document.querySelectorAll('#div-dashed,#div-solid,#div-double,#div-wave').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
   const r = document.getElementById('receipt');
   r.classList.remove('r-divider-solid','r-divider-double','r-divider-wave');
+  removeDotDividers();
   if(style==='solid') r.classList.add('r-divider-solid');
   else if(style==='double') r.classList.add('r-divider-double');
-  else if(style==='wave') r.classList.add('r-divider-wave');
+  else if(style==='wave'){ r.classList.add('r-divider-wave'); insertDotDividers(); }
 }
 
 // ─── TITLE SIZE ───
