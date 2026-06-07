@@ -1211,9 +1211,8 @@ function renderBannerEditor(){
       </div>
       <div style="margin-top:8px">
         <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px">배경 스타일</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:6px" id="bbgtype-btns-${i}">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px" id="bbgtype-btns-${i}">
           <button class="style-btn" id="bbgbtn-color-${i}" onclick="setBannerBgType(${i},'color',this)">단색</button>
-          <button class="style-btn" id="bbgbtn-gradient-${i}" onclick="setBannerBgType(${i},'gradient',this)">그라데이션</button>
           <button class="style-btn" id="bbgbtn-transparent-${i}" onclick="setBannerBgType(${i},'transparent',this)">투명</button>
         </div>
         <!-- 단색 -->
@@ -1224,26 +1223,7 @@ function renderBannerEditor(){
           </div>
           <span style="font-size:11px;color:var(--muted)">배경색</span>
         </div>
-        <!-- 그라데이션 -->
-        <div id="bbg-gradient-${i}" style="display:none;flex-direction:column;gap:5px">
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-size:11px;color:var(--muted);white-space:nowrap">색1</span>
-            <div class="color-dot" style="width:24px;height:24px;border-radius:6px;flex-shrink:0">
-              <div class="color-dot-swatch" id="bbggrad1swatch-${i}" style="background:${b.bgGrad1||'#d94f5c'};border-radius:5px"></div>
-              <input type="color" value="${b.bgGrad1||'#d94f5c'}" oninput="setBannerGrad(${i},1,this.value)">
-            </div>
-            <span style="font-size:11px;color:var(--muted);white-space:nowrap">색2</span>
-            <div class="color-dot" style="width:24px;height:24px;border-radius:6px;flex-shrink:0">
-              <div class="color-dot-swatch" id="bbggrad2swatch-${i}" style="background:${b.bgGrad2||'#9b5de5'};border-radius:5px"></div>
-              <input type="color" value="${b.bgGrad2||'#9b5de5'}" oninput="setBannerGrad(${i},2,this.value)">
-            </div>
-          </div>
-          <div style="display:flex;gap:4px">
-            <button class="style-btn ${(!b.bgGradDir||b.bgGradDir==='to right')?'active':''}" id="bgdir-right-${i}" onclick="setBannerGradDir(${i},'to right',this)" style="flex:unset;padding:3px 8px;font-size:11px">→</button>
-            <button class="style-btn ${b.bgGradDir==='to bottom'?'active':''}" id="bgdir-down-${i}" onclick="setBannerGradDir(${i},'to bottom',this)" style="flex:unset;padding:3px 8px;font-size:11px">↓</button>
-            <button class="style-btn ${b.bgGradDir==='135deg'?'active':''}" id="bgdir-diag-${i}" onclick="setBannerGradDir(${i},'135deg',this)" style="flex:unset;padding:3px 8px;font-size:11px">↘</button>
-          </div>
-        </div>
+        <div id="bbg-gradient-${i}" style="display:none"></div>
       </div>
       ${hasImg?`
       <div class="img-ctrl-row"><label>크기</label>
@@ -1265,7 +1245,7 @@ function renderBannerEditor(){
 function initBannerBgUI(i){
   const b = state.banners[i];
   const t = b.bgType || 'color';
-  ['color','gradient','transparent'].forEach(type => {
+  ['color','transparent'].forEach(type => {
     const btn = document.getElementById(`bbgbtn-${type}-${i}`);
     if(btn) btn.classList.toggle('active', type === t);
   });
@@ -1912,12 +1892,13 @@ let saveGradDir = 'to right';
 let bgBlurImgSrc = null;
 
 function setSaveBg(type, el){
-  setTimeout(applyPreviewBg, 50);
   saveBgType = type;
   document.querySelectorAll('[id^="savebg-"]').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  document.getElementById('saveBgColorRow').style.display = type==='color' ? 'flex' : 'none';
-  document.getElementById('saveBgBlurRow').style.display  = type==='blur'  ? 'block': 'none';
+  document.getElementById('saveBgColorRow').style.display    = type==='color'    ? 'flex'  : 'none';
+  document.getElementById('saveBgGradRow').style.display     = type==='gradient' ? 'flex'  : 'none';
+  document.getElementById('saveBgBlurRow').style.display     = type==='blur'     ? 'block' : 'none';
+  setTimeout(applyPreviewBg, 50);
 }
 
 // ─── PREVIEW BG (미리보기 영역 배경 적용) ───
@@ -1946,8 +1927,9 @@ function applyPreviewBg(){
   } else if(saveBgType === 'gradient'){
     const g1 = document.getElementById('saveGrad1Input').value;
     const g2 = document.getElementById('saveGrad2Input').value;
-    area.style.background = `linear-gradient(${saveGradDir},${g1},${g2})`;
-    area.style.backgroundImage = '';
+    const gradStr = `linear-gradient(${saveGradDir},${g1},${g2})`;
+    area.style.backgroundImage = gradStr;
+    area.style.backgroundColor = '';
   } else if(saveBgType === 'blur' && bgBlurImgSrc){
     const blur = document.getElementById('bgBlurAmount').value;
     const dim  = parseInt(document.getElementById('bgDimAmount').value)/100;
@@ -1966,7 +1948,8 @@ function applyPreviewBg(){
     const overlay = document.getElementById('previewBgOverlay');
     if(overlay) overlay.remove();
     area.style.backgroundAttachment = '';
-    if(saveBgType !== 'color') area.style.backgroundImage = '';
+    // gradient는 backgroundImage로 설정하므로 지우지 않음
+    if(saveBgType !== 'color' && saveBgType !== 'gradient') area.style.backgroundImage = '';
   }
 }
 
